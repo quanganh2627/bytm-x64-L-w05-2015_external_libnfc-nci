@@ -1487,7 +1487,13 @@ BOOLEAN nfa_ee_is_active (tNFA_HANDLE nfcee_id)
     BOOLEAN is_active = FALSE;
     int     xx;
     tNFA_EE_ECB  *p_cb = nfa_ee_cb.ecb;
-
+#ifdef NXP_EXT
+    /* Added case for NFCEE_DH */
+    if(nfcee_id == NFA_EE_HANDLE_DH)
+    {
+        return TRUE;
+    }
+#endif
     if ((NFA_HANDLE_GROUP_MASK & nfcee_id) == NFA_HANDLE_GROUP_EE)
         nfcee_id    &= NFA_HANDLE_MASK;
 
