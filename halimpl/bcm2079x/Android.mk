@@ -33,7 +33,7 @@ endif
 # build shared library system/lib/hw/nfc_nci.*.so
 # which is linked by libhardware.so
 
-
+ifeq ($(strip $(BOARD_HAVE_NXP_PN547)), false)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := nfc_nci.$(HAL_SUFFIX)
@@ -45,7 +45,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_C_INCLUDES += external/stlport/stlport  bionic/  bionic/libstdc++/include \
 	$(LOCAL_PATH)/include \
 	$(LOCAL_PATH)/gki/ulinux \
- 	$(LOCAL_PATH)/gki/common \
+	$(LOCAL_PATH)/gki/common \
 	$(LOCAL_PATH)/udrv/include \
 	$(LOCAL_PATH)/hal/include \
 	$(LOCAL_PATH)/hal/int
@@ -54,3 +54,4 @@ LOCAL_CFLAGS += -DANDROID \
 	-DBUILDCFG=1 -DNFC_HAL_TARGET=TRUE -DNFC_RW_ONLY=TRUE
 
 include $(BUILD_SHARED_LIBRARY)
+endif
