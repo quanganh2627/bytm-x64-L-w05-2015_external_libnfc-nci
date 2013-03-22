@@ -1490,6 +1490,10 @@ static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T3T)
                      ||(  (nfa_dm_cb.disc_cb.activated_protocol == NFC_PROTOCOL_ISO_DEP)
                         &&(nfa_dm_cb.disc_cb.activated_rf_interface == NFC_INTERFACE_ISO_DEP)  )
+#ifdef NXP_EXT
+                     ||(  (nfa_dm_cb.disc_cb.activated_protocol == NFC_PROTOCOL_MIFARE)
+                        &&(nfa_dm_cb.disc_cb.activated_rf_interface == NFC_INTERFACE_MIFARE)  )
+#endif
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFA_PROTOCOL_ISO15693)  )
             {
                 /* Notify NFA tag sub-system */
@@ -1641,11 +1645,29 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
         }
 
         /* get length of NFCID and location */
+#ifdef NXP_EXT
+        if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_A)
+        {
+            if(p_tech_params->param.pa.nfcid1_len == 0)
+            {
+                nfcid_len = sizeof(p_params->t1t.uid);
+                p_nfcid   = p_params->t1t.uid;
+                evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1_len = nfcid_len;
+                memcpy (evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1,p_nfcid,nfcid_len);
+            }
+            else
+            {
+                nfcid_len = p_tech_params->param.pa.nfcid1_len;
+                p_nfcid   = p_tech_params->param.pa.nfcid1;
+            }
+        }
+#else
         if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_A)
         {
             nfcid_len = p_tech_params->param.pa.nfcid1_len;
             p_nfcid   = p_tech_params->param.pa.nfcid1;
         }
+#endif
         else if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_B)
         {
             nfcid_len = NFC_NFCID0_MAX_LEN;

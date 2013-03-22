@@ -458,11 +458,29 @@ void nfa_rw_handle_presence_check_rsp (tNFC_STATUS status)
 static void nfa_rw_handle_t1t_evt (tRW_EVENT event, tRW_DATA *p_rw_data)
 {
     tNFA_CONN_EVT_DATA conn_evt_data;
-
+#ifdef NXP_EXT
+    tNFA_TAG_PARAMS tag_params;
+    UINT8 *p_rid_rsp;
+#endif
     conn_evt_data.status = p_rw_data->data.status;
     switch (event)
     {
     case RW_T1T_RID_EVT:
+#ifdef NXP_EXT
+        /* Assume the data is just the response byte sequence */
+        p_rid_rsp = (UINT8 *) (p_rw_data->data.p_data + 1) + p_rw_data->data.p_data->offset;
+        /* Fetch HR from RID response message */
+        STREAM_TO_ARRAY (tag_params.t1t.hr,  p_rid_rsp, T1T_HR_LEN);
+        /* Fetch UID0-3 from RID response message */
+        STREAM_TO_ARRAY (tag_params.t1t.uid,  p_rid_rsp, T1T_CMD_UID_LEN);
+
+        /* Command complete - perform cleanup, notify the app */
+        nfa_rw_command_complete();
+
+        nfa_dm_notify_activation_status(NFA_STATUS_OK, &tag_params);
+        break;
+#endif
+
     case RW_T1T_RALL_CPLT_EVT:
     case RW_T1T_READ_CPLT_EVT:
     case RW_T1T_RSEG_CPLT_EVT:
@@ -2390,10 +2408,17 @@ BOOLEAN nfa_rw_activate_ntf(tNFA_RW_MSG *p_data)
     {
     case NFC_PROTOCOL_T1T:
         /* Retrieve HR and UID fields from activation notification */
+#ifdef NXP_EXT
+        memcpy (tag_params.t1t.uid, p_activate_params->rf_tech_param.param.pa.nfcid1, p_activate_params->rf_tech_param.param.pa.nfcid1_len);
+        msg.op = NFA_RW_OP_T1T_RID;
+        nfa_rw_handle_op_req((tNFA_RW_MSG *)&msg);
+        activate_notify = FALSE;                    /* Delay notifying upper layer of NFA_ACTIVATED_EVT until HR0/HR1 is received */
+        break;
+#else
         memcpy (tag_params.t1t.hr, p_activate_params->intf_param.intf_param.frame.param, NFA_T1T_HR_LEN);
         memcpy (tag_params.t1t.uid, p_activate_params->rf_tech_param.param.pa.nfcid1, p_activate_params->rf_tech_param.param.pa.nfcid1_len);
         break;
-
+#endif
     case NFC_PROTOCOL_T2T:
         /* Retrieve UID fields from activation notification */
         memcpy (tag_params.t2t.uid, p_activate_params->rf_tech_param.param.pa.nfcid1, p_activate_params->rf_tech_param.param.pa.nfcid1_len);
