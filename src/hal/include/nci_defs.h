@@ -386,14 +386,18 @@ typedef UINT8 tNCI_INTF_TYPE;
 #ifndef NCI_PROTOCOL_MIFARE
 #define NCI_PROTOCOL_MIFARE             0x80
 #endif
+#ifndef NCI_PROTOCOL_18092_ACTIVE
+#define NCI_PROTOCOL_18092_ACTIVE       0x05
+#endif
+#else
+#ifndef NCI_PROTOCOL_MIFARE
+#define NCI_PROTOCOL_MIFARE             0xFF
 #endif
 #ifndef NCI_PROTOCOL_18092_ACTIVE
-#ifdef NXP_EXT
-#define NCI_PROTOCOL_18092_ACTIVE       0x84
-#else
 #define NCI_PROTOCOL_18092_ACTIVE       0x80
 #endif
 #endif
+
 #ifndef NCI_PROTOCOL_B_PRIME
 #define NCI_PROTOCOL_B_PRIME            0x81
 #endif

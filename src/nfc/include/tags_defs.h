@@ -333,6 +333,25 @@ typedef UINT8 tT3T_POLL_RC;
 #define T4T_CMD_P2_FIRST_OR_ONLY_00H    0x00
 #define T4T_CMD_P2_FIRST_OR_ONLY_0CH    0x0C
 
+#ifdef NXP_EXT
+#define T4T_CMD_DES_CLASS               0x90
+#define T4T_CMD_INS_GET_HW_VERSION      0x60
+#define T4T_CMD_CREATE_AID              0xCA
+#define T4T_CMD_SELECT_APP              0x5A
+#define T4T_CMD_CREATE_DATAFILE         0xCD
+#define T4T_CMD_DES_WRITE               0x3D
+#define T4T_ADDI_FRAME_RESP             0xAFU
+#define T4T_SIZE_IDENTIFIER_2K          0x16U
+#define T4T_SIZE_IDENTIFIER_4K          0x18U
+#define T4T_SIZE_IDENTIFIER_8K          0x1AU
+#define T4T_DESEV1_MAJOR_VERSION        0x01U
+#define T4T_TYPE_DESFIRE_EV1            0x01U
+#define T4T_DESEV0_MAJOR_VERSION        0x00U
+#define T4T_DESEV0_MINOR_VERSION        0x06U
+#define T4T_DES_EV1_NFC_APP_ID          0x010000
+#define T4T_DES_EV0_NFC_APP_ID          0x10EEEE
+#endif
+
 #define T4T_MAX_LENGTH_LE               0xFF    /* Max number of bytes to be read from file in ReadBinary Command */
 #define T4T_MAX_LENGTH_LC               0xFF    /* Max number of bytes written to NDEF file in UpdateBinary Command */
 

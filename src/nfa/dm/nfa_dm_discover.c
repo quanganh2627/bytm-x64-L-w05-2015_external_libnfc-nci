@@ -1808,10 +1808,15 @@ static void nfa_dm_disc_sm_poll_active (tNFA_DM_RF_DISC_SM_EVENT event,
     {
     case NFA_DM_RF_DEACTIVATE_CMD:
 #ifdef NXP_EXT
-        nfa_dm_cb.presence_check_deact_pending = TRUE;
-        nfa_dm_cb.presence_check_deact_type    = p_data->deactivate_type;
-        status = nfa_dm_send_deactivate_cmd(p_data->deactivate_type);
-#else
+        if (nfa_dm_cb.disc_cb.activated_protocol == NCI_PROTOCOL_MIFARE)
+        {
+            nfa_dm_cb.presence_check_deact_pending = TRUE;
+            nfa_dm_cb.presence_check_deact_type    = p_data->deactivate_type;
+            status = nfa_dm_send_deactivate_cmd(p_data->deactivate_type);
+            break;
+
+        }
+#endif
         if (old_pres_check_flag)
         {
             /* presence check is already enabled when deactivate cmd is requested,
@@ -1823,7 +1828,7 @@ static void nfa_dm_disc_sm_poll_active (tNFA_DM_RF_DISC_SM_EVENT event,
         {
             status = nfa_dm_send_deactivate_cmd(p_data->deactivate_type);
         }
-#endif
+
         break;
     case NFA_DM_RF_DEACTIVATE_RSP:
         nfa_dm_cb.disc_cb.disc_flags &= ~NFA_DM_DISC_FLAGS_W4_RSP;
