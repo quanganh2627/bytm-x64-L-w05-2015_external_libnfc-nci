@@ -902,12 +902,14 @@ tNFA_STATUS NFA_HciAddStaticPipe (tNFA_HANDLE hci_handle, UINT8 host, UINT8 gate
         NFA_TRACE_API1 ("NFA_HciAddStaticPipe (): Invalid Gate:0x%02x", gate);
         return (NFA_STATUS_FAILED);
     }
-#ifndef NXP_EXT
+#ifdef NXP_EXT
+#ifndef GEMATO_SE_SUPPORT
     if (pipe <= NFA_HCI_LAST_DYNAMIC_PIPE)
     {
         NFA_TRACE_API1 ("NFA_HciAddStaticPipe (): Invalid Pipe:0x%02x", pipe);
         return (NFA_STATUS_FAILED);
     }
+#endif
 #endif
     NFA_TRACE_API2 ("NFA_HciAddStaticPipe (): hci_handle:0x%04x, pipe:0x%02X", hci_handle, pipe);
 
