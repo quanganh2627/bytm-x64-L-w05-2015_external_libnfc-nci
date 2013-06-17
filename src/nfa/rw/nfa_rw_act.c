@@ -467,13 +467,15 @@ static void nfa_rw_handle_t1t_evt (tRW_EVENT event, tRW_DATA *p_rw_data)
     {
 #ifdef NXP_EXT
     case RW_T1T_RID_EVT:
-        /* Assume the data is just the response byte sequence */
-        p_rid_rsp = (UINT8 *) (p_rw_data->data.p_data + 1) + p_rw_data->data.p_data->offset;
-        /* Fetch HR from RID response message */
-        STREAM_TO_ARRAY (tag_params.t1t.hr,  p_rid_rsp, T1T_HR_LEN);
-        /* Fetch UID0-3 from RID response message */
-        STREAM_TO_ARRAY (tag_params.t1t.uid,  p_rid_rsp, T1T_CMD_UID_LEN);
-
+        if(p_rw_data->data.p_data != NULL)
+        {
+            /* Assume the data is just the response byte sequence */
+            p_rid_rsp = (UINT8 *) (p_rw_data->data.p_data + 1) + p_rw_data->data.p_data->offset;
+            /* Fetch HR from RID response message */
+            STREAM_TO_ARRAY (tag_params.t1t.hr,  p_rid_rsp, T1T_HR_LEN);
+            /* Fetch UID0-3 from RID response message */
+            STREAM_TO_ARRAY (tag_params.t1t.uid,  p_rid_rsp, T1T_CMD_UID_LEN);
+        }
         /* Command complete - perform cleanup, notify the app */
         nfa_rw_command_complete();
 
