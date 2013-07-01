@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 /******************************************************************************
  *
  *  This file contains the action functions for device manager state
@@ -56,6 +74,9 @@ static tNFA_STATUS nfa_dm_start_polling (void);
 static BOOLEAN nfa_dm_deactivate_polling (void);
 static void nfa_dm_excl_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_data);
 static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_data);
+#ifdef NXP_EXT
+extern unsigned char appl_dta_mode_flag;
+#endif
 
 
 /*******************************************************************************
@@ -1482,8 +1503,23 @@ static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
             if (  (nfa_dm_cb.disc_cb.activated_protocol     == NFC_PROTOCOL_NFC_DEP)
                 &&(nfa_dm_cb.disc_cb.activated_rf_interface == NFC_INTERFACE_NFC_DEP)  )
             {
+#ifdef NXP_EXT
+                if (appl_dta_mode_flag == 1)
+                {
+                    /* Open raw channel in case of p2p for DTA testing */
+                    NFC_SetStaticRfCback (nfa_dm_act_data_cback);
+                    nfa_dm_notify_activation_status (NFA_STATUS_OK, NULL);
+
+                }
+                else
+                {
+                    /* activate LLCP */
+                    nfa_p2p_activate_llcp (p_data);
+                }
+#else
                 /* activate LLCP */
                 nfa_p2p_activate_llcp (p_data);
+#endif
             }
             else if (  (nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T1T)
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T2T)
@@ -1656,6 +1692,11 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
                 {
                     evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1_len = nfcid_len;
                     memcpy (evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1,p_nfcid,nfcid_len);
+                }
+                else
+                {
+                    NFA_TRACE_ERROR0 ("Unable to get the T1T UID");
+                    return;
                 }
             }
             else

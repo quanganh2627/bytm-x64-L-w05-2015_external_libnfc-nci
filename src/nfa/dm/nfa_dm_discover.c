@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 /******************************************************************************
  *
  *  This file contains the action functions for device manager discovery
@@ -37,7 +55,9 @@
 /*
 **  static functions
 */
-
+#ifdef NXP_EXT
+extern unsigned char appl_dta_mode_flag;
+#endif
 static UINT8 nfa_dm_get_rf_discover_config (tNFA_DM_DISC_TECH_PROTO_MASK dm_disc_mask,
                                             tNFC_DISCOVER_PARAMS disc_params[],
                                             UINT8 max_params);
@@ -1178,7 +1198,19 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
             if (nfa_dm_cb.disc_cb.entry[xx].host_id == host_id_in_LRT)
             {
                 if (nfa_dm_cb.disc_cb.entry[xx].selected_disc_mask & activated_disc_mask)
+                {
                     break;
+                }
+#ifdef NXP_EXT
+                else
+                {
+                    if (appl_dta_mode_flag == 1)
+                    {
+                       NFA_TRACE_DEBUG0("DTA Mode Enabled");
+                       break;
+                    }
+                }
+#endif
             }
             else
             {
@@ -1569,7 +1601,21 @@ static void nfa_dm_disc_sm_discovery (tNFA_DM_RF_DISC_SM_EVENT event,
         nfa_dm_start_rf_discover ();
         break;
     case NFA_DM_RF_DISCOVER_NTF:
+#ifdef NXP_EXT
+        /* Notification Type = NCI_DISCOVER_NTF_LAST_ABORT */
+        if (p_data->nfc_discover.result.more == NCI_DISCOVER_NTF_LAST_ABORT)
+        {
+            /* Fix for multiple tags: After receiving deactivate event, restart discovery */
+            NFA_TRACE_DEBUG0 ("Received NCI_DISCOVER_NTF_LAST_ABORT, sending deactivate command");
+            NFC_Deactivate (NFA_DEACTIVATE_TYPE_IDLE);
+        }
+        else
+        {
+            nfa_dm_disc_new_state (NFA_DM_RFST_W4_ALL_DISCOVERIES);
+        }
+#else
         nfa_dm_disc_new_state (NFA_DM_RFST_W4_ALL_DISCOVERIES);
+#endif
         nfa_dm_notify_discovery (p_data);
         break;
     case NFA_DM_RF_INTF_ACTIVATED_NTF:
@@ -1770,6 +1816,10 @@ static void nfa_dm_disc_sm_w4_host_select (tNFA_DM_RF_DISC_SM_EVENT event,
         break;
     default:
         NFA_TRACE_ERROR0 ("nfa_dm_disc_sm_w4_host_select (): Unexpected discovery event");
+#ifdef NXP_EXT
+        NFA_TRACE_ERROR0 ("nfa_dm_disc_sm_w4_host_select (): Restarted discovery");
+        NFC_Deactivate (NFA_DEACTIVATE_TYPE_IDLE);
+#endif
         break;
     }
 
