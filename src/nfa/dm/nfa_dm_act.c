@@ -1684,7 +1684,7 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
 #ifdef NXP_EXT
         if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_A)
         {
-            if(p_tech_params->param.pa.nfcid1_len == 0)
+            if((p_tech_params->param.pa.nfcid1_len == 0) && (p_params != NULL))
             {
                 nfcid_len = sizeof(p_params->t1t.uid);
                 p_nfcid   = p_params->t1t.uid;
