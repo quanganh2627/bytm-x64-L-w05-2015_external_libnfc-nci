@@ -38,7 +38,7 @@ endif
 endif
 
 ifeq ($(strip $(BOARD_HAVE_NXP_PN547)), true)
-D_CFLAGS += -DNXP_EXT -DNXP_UICC_ENABLE
+D_CFLAGS += -DNXP_EXT
 endif
 
 D_CFLAGS += -DBUILDCFG=1

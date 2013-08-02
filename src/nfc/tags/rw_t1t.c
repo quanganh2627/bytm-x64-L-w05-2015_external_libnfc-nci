@@ -282,6 +282,10 @@ void rw_t1t_conn_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p_data)
         {
             rw_t1t_process_error ();
         }
+#ifdef NXP_EXT
+        /* Free the response buffer in case of invalid response */
+        GKI_freebuf((BT_HDR *) (p_data->data.p_data));
+#endif
         break;
 
     default:
@@ -460,6 +464,10 @@ static tRW_EVENT rw_t1t_handle_rid_rsp (BT_HDR *p_pkt)
 
     /* Fetch UID0-3 from RID response message */
     STREAM_TO_ARRAY (p_t1t->mem,  p_rid_rsp, T1T_CMD_UID_LEN);
+#ifdef NXP_EXT
+    /* Fix!! Free the RID response buffer */
+    GKI_freebuf (p_pkt);
+#endif
 
     /* Notify RID response Event */
     return RW_T1T_RID_EVT;

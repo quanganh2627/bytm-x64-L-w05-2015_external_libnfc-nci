@@ -1218,9 +1218,7 @@ void nfa_hci_handle_admin_gate_cmd (UINT8 *p_data)
         if (  (dest_gate == NFA_HCI_IDENTITY_MANAGEMENT_GATE)
             ||(dest_gate == NFA_HCI_LOOP_BACK_GATE)
 #ifdef NXP_EXT
-#ifdef GEMATO_SE_SUPPORT
             ||(dest_gate == NFC_HCI_DEFAULT_DEST_GATE)
-#endif
 #endif
            )
         {
@@ -1650,7 +1648,6 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
         nfa_hci_handle_connectivity_gate_pkt (p_data, data_len, p_pipe);
     }
 #ifdef NXP_EXT
-#ifdef GEMATO_SE_SUPPORT
     else if (p_pipe->local_gate == NFC_HCI_DEFAULT_DEST_GATE)
     {
         /* Check if data packet is a command, response or event */
@@ -1672,7 +1669,6 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
             break;
         }
     }
-#endif
 #endif
     else
     {
