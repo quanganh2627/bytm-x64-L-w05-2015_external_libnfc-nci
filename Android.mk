@@ -46,6 +46,7 @@ LOCAL_SRC_FILES := \
     src/nfca_version.c
 include $(BUILD_SHARED_LIBRARY)
 
+ifeq ($(BOARD_HAVE_BCM2079X),true)
 
 ######################################
 # Build shared library system/lib/hw/nfc_nci.*.so for Hardware Abstraction Layer.
@@ -72,6 +73,7 @@ LOCAL_CFLAGS := $(D_CFLAGS) -DNFC_HAL_TARGET=TRUE -DNFC_RW_ONLY=TRUE
 LOCAL_CPPFLAGS := $(LOCAL_CFLAGS)
 include $(BUILD_SHARED_LIBRARY)
 
+endif #BOARD_HAVE_BCM2079X
 
 ######################################
 include $(call all-makefiles-under,$(LOCAL_PATH))
