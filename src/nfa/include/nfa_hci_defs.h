@@ -29,9 +29,6 @@
 /* Static gates */
 #define NFA_HCI_LOOP_BACK_GATE              0x04
 #define NFA_HCI_IDENTITY_MANAGEMENT_GATE    0x05
-#ifdef NXP_EXT
-#define NFC_HCI_DEFAULT_DEST_GATE           0XF0
-#endif
 
 #define NFA_HCI_FIRST_HOST_SPECIFIC_GENERIC_GATE    0x10
 #define NFA_HCI_LAST_HOST_SPECIFIC_GENERIC_GATE     0xEF

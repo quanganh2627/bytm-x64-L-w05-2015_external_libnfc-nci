@@ -1216,11 +1216,7 @@ void nfa_hci_handle_admin_gate_cmd (UINT8 *p_data)
         STREAM_TO_UINT8 (pipe,        p_data);
 
         if (  (dest_gate == NFA_HCI_IDENTITY_MANAGEMENT_GATE)
-            ||(dest_gate == NFA_HCI_LOOP_BACK_GATE)
-#ifdef NXP_EXT
-            ||(dest_gate == NFC_HCI_DEFAULT_DEST_GATE)
-#endif
-           )
+            ||(dest_gate == NFA_HCI_LOOP_BACK_GATE) )
         {
             response = nfa_hciu_add_pipe_to_static_gate (dest_gate, pipe, source_host, source_gate);
         }
@@ -1647,29 +1643,6 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
     {
         nfa_hci_handle_connectivity_gate_pkt (p_data, data_len, p_pipe);
     }
-#ifdef NXP_EXT
-    else if (p_pipe->local_gate == NFC_HCI_DEFAULT_DEST_GATE)
-    {
-        /* Check if data packet is a command, response or event */
-        p_gate = nfa_hci_cb.cfg.dyn_gates;
-        p_gate->gate_owner = 0x0800;
-
-        switch (nfa_hci_cb.type)
-        {
-        case NFA_HCI_COMMAND_TYPE:
-            nfa_hci_handle_generic_gate_cmd (p_data, (UINT8) data_len, p_gate, p_pipe);
-            break;
-
-        case NFA_HCI_RESPONSE_TYPE:
-            nfa_hci_handle_generic_gate_rsp (p_data, (UINT8) data_len, p_gate, p_pipe);
-            break;
-
-        case NFA_HCI_EVENT_TYPE:
-            nfa_hci_handle_generic_gate_evt (p_data, data_len, p_gate, p_pipe);
-            break;
-        }
-    }
-#endif
     else
     {
         p_gate = nfa_hciu_find_gate_by_gid (p_pipe->local_gate);

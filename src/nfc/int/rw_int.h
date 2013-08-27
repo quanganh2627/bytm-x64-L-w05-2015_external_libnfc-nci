@@ -459,10 +459,6 @@ typedef struct
 
     UINT16              max_read_size;      /* max reading size per a command   */
     UINT16              max_update_size;    /* max updating size per a command  */
-#ifdef NXP_EXT
-    UINT16              card_size;
-    UINT8               card_type;
-#endif
 } tRW_T4T_CB;
 
 /* RW retransmission statistics */

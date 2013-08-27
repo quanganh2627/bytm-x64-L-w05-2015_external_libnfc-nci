@@ -362,19 +362,12 @@ tNFA_STATUS NFA_CeRegisterAidOnDH (UINT8 aid[NFC_MAX_AID_LEN],
         p_msg->reg_listen.listen_type = NFA_CE_REG_TYPE_ISO_DEP;
 
         /* Listen info */
-        if (aid_len < NFC_MAX_AID_LEN)
-        {
-            memcpy (p_msg->reg_listen.aid, aid, aid_len);
-            p_msg->reg_listen.aid_len = aid_len;
+        memcpy (p_msg->reg_listen.aid, aid, aid_len);
+        p_msg->reg_listen.aid_len = aid_len;
 
-            nfa_sys_sendmsg (p_msg);
+        nfa_sys_sendmsg (p_msg);
 
-            return (NFA_STATUS_OK);
-        }
-        else
-        {
-            return (NFA_STATUS_FAILED);
-        }
+        return (NFA_STATUS_OK);
     }
 
     return (NFA_STATUS_FAILED);
@@ -452,3 +445,4 @@ tNFA_STATUS NFA_CeSetIsoDepListenTech (tNFA_TECHNOLOGY_MASK tech_mask)
 
     return (NFA_STATUS_FAILED);
 }
+
