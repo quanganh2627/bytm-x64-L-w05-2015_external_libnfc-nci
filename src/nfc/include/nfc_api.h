@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright (C) 2009-2012 Broadcom Corporation
+ *  Copyright (C) 2009-2013 Broadcom Corporation
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+
 
 /******************************************************************************
  *
@@ -340,6 +341,9 @@ typedef UINT8 tNFC_RF_TECH;
 #define NFC_PROTOCOL_T3T        NCI_PROTOCOL_T3T      /* Type3Tag    - NFC-F            */
 #define NFC_PROTOCOL_ISO_DEP    NCI_PROTOCOL_ISO_DEP  /* Type 4A,4B  - NFC-A or NFC-B   */
 #define NFC_PROTOCOL_NFC_DEP    NCI_PROTOCOL_NFC_DEP  /* NFCDEP/LLCP - NFC-A or NFC-F       */
+#ifdef NXP_EXT
+#define NFC_PROTOCOL_MIFARE     NCI_PROTOCOL_MIFARE
+#endif
 #define NFC_PROTOCOL_B_PRIME    NCI_PROTOCOL_B_PRIME
 #define NFC_PROTOCOL_15693      NCI_PROTOCOL_15693
 #define NFC_PROTOCOL_KOVIO      NCI_PROTOCOL_KOVIO
@@ -389,6 +393,9 @@ typedef UINT8 tNFC_BIT_RATE;
 #define NFC_INTERFACE_LLCP_LOW      NCI_INTERFACE_LLCP_LOW
 #define NFC_INTERFACE_LLCP_HIGH     NCI_INTERFACE_LLCP_HIGH
 #define NFC_INTERFACE_VS_T2T_CE     NCI_INTERFACE_VS_T2T_CE
+#ifdef NXP_EXT
+#define NFC_INTERFACE_MIFARE        NCI_INTERFACE_MIFARE
+#endif
 typedef tNCI_INTF_TYPE tNFC_INTF_TYPE;
 
 /**********************************************
@@ -558,25 +565,29 @@ typedef struct
     UINT8       uid[NFC_ISO15693_UID_LEN];
 } tNFC_RF_PISO15693_PARAMS;
 
-#define NFC_KOVIO_MAX_LEN       16
+#ifndef NFC_KOVIO_MAX_LEN
+#define NFC_KOVIO_MAX_LEN       32
+#endif
 typedef struct
 {
     UINT8       uid_len;
     UINT8       uid[NFC_KOVIO_MAX_LEN];
 } tNFC_RF_PKOVIO_PARAMS;
 
+typedef union
+{
+    tNFC_RF_PA_PARAMS   pa;
+    tNFC_RF_PB_PARAMS   pb;
+    tNFC_RF_PF_PARAMS   pf;
+    tNFC_RF_LF_PARAMS   lf;
+    tNFC_RF_PISO15693_PARAMS pi93;
+    tNFC_RF_PKOVIO_PARAMS pk;
+} tNFC_RF_TECH_PARAMU;
+
 typedef struct
 {
     tNFC_DISCOVERY_TYPE     mode;
-    union
-    {
-        tNFC_RF_PA_PARAMS   pa;
-        tNFC_RF_PB_PARAMS   pb;
-        tNFC_RF_PF_PARAMS   pf;
-        tNFC_RF_LF_PARAMS   lf;
-        tNFC_RF_PISO15693_PARAMS pi93;
-        tNFC_RF_PKOVIO_PARAMS pk;
-    } param; /* Discovery Type specific parameters */
+    tNFC_RF_TECH_PARAMU     param;
 } tNFC_RF_TECH_PARAMS;
 
 /* the data type associated with NFC_RESULT_DEVT */
@@ -693,6 +704,7 @@ typedef struct
     UINT8                   rf_disc_id;     /* RF Discovery ID          */
     tNFC_PROTOCOL           protocol;       /* supported protocol       */
     tNFC_RF_TECH_PARAMS     rf_tech_param;  /* RF technology parameters */
+    tNFC_DISCOVERY_TYPE     data_mode;      /* for future Data Exchange */
     tNFC_BIT_RATE           tx_bitrate;     /* Data Exchange Tx Bitrate */
     tNFC_BIT_RATE           rx_bitrate;     /* Data Exchange Rx Bitrate */
     tNFC_INTF_PARAMS        intf_param;     /* interface type and params*/

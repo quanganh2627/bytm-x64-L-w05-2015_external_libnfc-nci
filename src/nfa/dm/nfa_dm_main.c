@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright (C) 2010-2012 Broadcom Corporation
+ *  Copyright (C) 2010-2013 Broadcom Corporation
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+
 
 /******************************************************************************
  *
@@ -281,11 +282,13 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
         /*
         **  Listen B Configuration
         */
+#ifndef NXP_EXT
         case NFC_PMID_LB_SENSB_INFO:
             p_stored  = nfa_dm_cb.params.lb_sensb_info;
             max_len   = NCI_PARAM_LEN_LB_SENSB_INFO;
             p_cur_len = &nfa_dm_cb.params.lb_sensb_info_len;
             break;
+#endif
         case NFC_PMID_LB_NFCID0:
             p_stored  = nfa_dm_cb.params.lb_nfcid0;
             max_len   = NCI_PARAM_LEN_LB_NFCID0;
@@ -328,10 +331,12 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
         /*
         **  ISO-DEP and NFC-DEP Configuration
         */
+#ifndef NXP_EXT
         case NFC_PMID_FWI:
             p_stored = nfa_dm_cb.params.fwi;
             max_len  = NCI_PARAM_LEN_FWI;
             break;
+#endif
         case NFC_PMID_WT:
             p_stored = nfa_dm_cb.params.wt;
             max_len  = NCI_PARAM_LEN_WT;

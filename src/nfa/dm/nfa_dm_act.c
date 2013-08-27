@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright (C) 2010-2012 Broadcom Corporation
+ *  Copyright (C) 2010-2013 Broadcom Corporation
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 /******************************************************************************
  *
  *  This file contains the action functions for device manager state
@@ -32,8 +50,11 @@
 #include "nfa_rw_int.h"
 #include "nfa_rw_api.h"
 #include "nfa_p2p_int.h"
-#include "nfa_cho_int.h"
 #include "nci_hmsgs.h"
+
+#if (defined (NFA_CHO_INCLUDED) && (NFA_CHO_INCLUDED==TRUE))
+#include "nfa_cho_int.h"
+#endif
 
 #if (NFC_NFCEE_INCLUDED == TRUE)
 #include "nfa_ee_int.h"
@@ -42,8 +63,6 @@
 
 #if (defined (NFA_SNEP_INCLUDED) && (NFA_SNEP_INCLUDED==TRUE))
 #include "nfa_snep_int.h"
-#else
-#define nfa_snep_init ()
 #endif
 
 /* This is the timeout value to guarantee disable is performed within reasonable amount of time */
@@ -56,6 +75,9 @@ static tNFA_STATUS nfa_dm_start_polling (void);
 static BOOLEAN nfa_dm_deactivate_polling (void);
 static void nfa_dm_excl_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_data);
 static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_data);
+#ifdef NXP_EXT
+extern unsigned char appl_dta_mode_flag;
+#endif
 
 
 /*******************************************************************************
@@ -201,9 +223,11 @@ void nfa_dm_proc_nfcc_power_mode (UINT8 nfcc_power_mode)
     if (nfcc_power_mode == NFA_DM_PWR_MODE_FULL)
     {
         memset (&nfa_dm_cb.params, 0x00, sizeof (tNFA_DM_PARAMS));
-
+        NFA_TRACE_DEBUG2 ("setcfg_pending_mask=0x%x, setcfg_pending_num=%d",
+            nfa_dm_cb.setcfg_pending_mask, nfa_dm_cb.setcfg_pending_num);
         nfa_dm_cb.setcfg_pending_mask = 0;
         nfa_dm_cb.setcfg_pending_num  = 0;
+
         nfa_dm_set_init_nci_params ();
     }
 
@@ -330,7 +354,15 @@ static void nfa_dm_nfc_response_cback (tNFC_RESPONSE_EVT event, tNFC_RESPONSE *p
     case NFC_NFCEE_INFO_REVT:                    /* NFCEE Discover Notification */
     case NFC_EE_ACTION_REVT:                     /* EE Action notification */
     case NFC_NFCEE_MODE_SET_REVT:                /* NFCEE Mode Set response */
+        nfa_ee_proc_evt (event, p_data);
+        break;
+
     case NFC_EE_DISCOVER_REQ_REVT:               /* EE Discover Req notification */
+        if (nfa_dm_is_active() &&
+            (nfa_dm_cb.disc_cb.disc_state == NFA_DM_RFST_DISCOVERY) )
+        {
+            nfa_dm_rf_deactivate (NFA_DEACTIVATE_TYPE_IDLE);
+        }
         nfa_ee_proc_evt (event, p_data);
         break;
 #endif
@@ -390,6 +422,7 @@ static void nfa_dm_nfc_response_cback (tNFC_RESPONSE_EVT event, tNFC_RESPONSE *p
         conn_evt.status = p_data->status;
         nfa_dm_conn_cback_event_notify (NFA_UPDATE_RF_PARAM_RESULT_EVT, &conn_evt);
         break;
+
 
     default:
         break;
@@ -1058,6 +1091,8 @@ BOOLEAN nfa_dm_act_send_raw_frame (tNFA_DM_MSG *p_data)
         else
         {
             status = NFC_SendData (NFC_RF_CONN_ID, (BT_HDR*) p_data);
+            /* Already freed or NCI layer will free buffer */
+            return FALSE;
         }
     }
 
@@ -1427,15 +1462,6 @@ static void nfa_dm_excl_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
         nfa_dm_cb.disc_cb.activated_sel_res = 0;
         break;
 
-    case NFA_DM_RF_DISC_CMD_IDLE_CMPL_EVT:
-        /* DH initiated deactivation in NFA_DM_RFST_W4_HOST_SELECT */
-        /* No need to notify NFA RW sub-systems                    */
-
-        evt_data.deactivated.type = NFA_DEACTIVATE_TYPE_IDLE;
-        /* notify deactivation to application */
-        nfa_dm_conn_cback_event_notify (NFA_DEACTIVATED_EVT, &evt_data);
-        break;
-
     default:
         NFA_TRACE_ERROR0 ("Unexpected event");
         break;
@@ -1482,14 +1508,33 @@ static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
             if (  (nfa_dm_cb.disc_cb.activated_protocol     == NFC_PROTOCOL_NFC_DEP)
                 &&(nfa_dm_cb.disc_cb.activated_rf_interface == NFC_INTERFACE_NFC_DEP)  )
             {
+#ifdef NXP_EXT
+                if (appl_dta_mode_flag == 1)
+                {
+                    /* Open raw channel in case of p2p for DTA testing */
+                    NFC_SetStaticRfCback (nfa_dm_act_data_cback);
+                    nfa_dm_notify_activation_status (NFA_STATUS_OK, NULL);
+
+                }
+                else
+                {
+                    /* activate LLCP */
+                    nfa_p2p_activate_llcp (p_data);
+                }
+#else
                 /* activate LLCP */
                 nfa_p2p_activate_llcp (p_data);
+#endif
             }
             else if (  (nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T1T)
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T2T)
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T3T)
                      ||(  (nfa_dm_cb.disc_cb.activated_protocol == NFC_PROTOCOL_ISO_DEP)
                         &&(nfa_dm_cb.disc_cb.activated_rf_interface == NFC_INTERFACE_ISO_DEP)  )
+#ifdef NXP_EXT
+                     ||(  (nfa_dm_cb.disc_cb.activated_protocol == NFC_PROTOCOL_MIFARE)
+                        &&(nfa_dm_cb.disc_cb.activated_rf_interface == NFC_INTERFACE_MIFARE)  )
+#endif
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFA_PROTOCOL_ISO15693)  )
             {
                 /* Notify NFA tag sub-system */
@@ -1566,37 +1611,6 @@ static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
                 nfa_dm_conn_cback_event_notify (NFA_POLL_DISABLED_EVT, &evt_data);
             }
         }
-
-        break;
-
-    case NFA_DM_RF_DISC_CMD_IDLE_CMPL_EVT:
-        /* DH initiated deactivation in NFA_DM_RFST_W4_HOST_SELECT */
-        /* No need to notify NFA RW sub-systems                    */
-
-        /* clear stored NFCID/UID */
-        nfa_dm_cb.activated_nfcid_len = 0;
-        /* clean up SEL_RES response */
-        nfa_dm_cb.disc_cb.activated_sel_res = 0;
-
-        evt_data.deactivated.type = NFA_DEACTIVATE_TYPE_IDLE;
-        /* notify deactivation to application */
-        nfa_dm_conn_cback_event_notify (NFA_DEACTIVATED_EVT, &evt_data);
-
-        if (!(nfa_dm_cb.flags & NFA_DM_FLAGS_POLLING_ENABLED))
-        {
-            /* deregister discovery callback from NFA DM Discovery */
-            nfa_dm_delete_rf_discover (nfa_dm_cb.poll_disc_handle);
-            nfa_dm_cb.poll_disc_handle = NFA_HANDLE_INVALID;
-
-            /* this is for disable polling */
-            if (nfa_dm_cb.flags & NFA_DM_FLAGS_SEND_POLL_STOP_EVT)
-            {
-                nfa_dm_cb.flags &= ~NFA_DM_FLAGS_SEND_POLL_STOP_EVT;
-
-                evt_data.status = NFA_STATUS_OK;
-                nfa_dm_conn_cback_event_notify (NFA_POLL_DISABLED_EVT, &evt_data);
-            }
-        }
         break;
     }
 }
@@ -1641,11 +1655,37 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
         }
 
         /* get length of NFCID and location */
+#ifdef NXP_EXT
+        if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_A)
+        {
+            if(p_tech_params->param.pa.nfcid1_len == 0)
+            {
+                nfcid_len = sizeof(p_params->t1t.uid);
+                p_nfcid   = p_params->t1t.uid;
+                if (p_nfcid != NULL)
+                {
+                    evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1_len = nfcid_len;
+                    memcpy (evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1,p_nfcid,nfcid_len);
+                }
+                else
+                {
+                    NFA_TRACE_ERROR0 ("Unable to get the T1T UID");
+                    return;
+                }
+            }
+            else
+            {
+                nfcid_len = p_tech_params->param.pa.nfcid1_len;
+                p_nfcid   = p_tech_params->param.pa.nfcid1;
+            }
+        }
+#else
         if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_A)
         {
             nfcid_len = p_tech_params->param.pa.nfcid1_len;
             p_nfcid   = p_tech_params->param.pa.nfcid1;
         }
+#endif
         else if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_B)
         {
             nfcid_len = NFC_NFCID0_MAX_LEN;

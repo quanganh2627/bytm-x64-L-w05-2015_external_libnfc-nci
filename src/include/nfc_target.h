@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 #ifndef NFC_TARGET_H
 #define NFC_TARGET_H
 
@@ -129,6 +147,16 @@
 #endif
 
 
+/* NCI msg pool for HAL (for shared NFC/HAL GKI)*/
+#ifndef NFC_HAL_NCI_POOL_ID
+#define NFC_HAL_NCI_POOL_ID         NFC_NCI_POOL_ID
+#endif
+
+#ifndef NFC_HAL_NCI_POOL_BUF_SIZE
+#define NFC_HAL_NCI_POOL_BUF_SIZE   NFC_NCI_POOL_BUF_SIZE
+#endif
+
+
 /******************************************************************************
 **
 ** NCI Transport definitions
@@ -177,9 +205,6 @@
 #endif
 
 /* Define to TRUE to include not openned Broadcom Vendor Specific implementation */
-#ifndef NFC_BRCM_NOT_OPEN_INCLUDED
-#define NFC_BRCM_NOT_OPEN_INCLUDED  FALSE  //Android requires FALSE
-#endif
 
 /* Define to TRUE if compling for NFC Reader/Writer Only mode */
 #ifndef NFC_RW_ONLY
@@ -335,27 +360,6 @@
 #define CE_TEST_INCLUDED            FALSE
 #endif
 
-#if (NFC_BRCM_NOT_OPEN_INCLUDED == TRUE)
-/* Power cycle NFCC to move full power mode from CE low power mode */
-#ifndef NFC_LP_POWER_CYCLE_TO_FULL
-#define NFC_LP_POWER_CYCLE_TO_FULL  TRUE
-#endif
-
-/* Parameter for low power mode command    */
-#ifndef NFC_LP_COMMAND_PARAMS
-#define NFC_LP_COMMAND_PARAMS       5
-#endif
-
-/* Primary Threshold for battery monitor   */
-#ifndef NFC_LP_PRIMARY_THRESHOLD
-#define NFC_LP_PRIMARY_THRESHOLD    0
-#endif
-
-/* Secondary Threshold for battery monitor */
-#ifndef NFC_LP_SECONDARY_THRESHOLD
-#define NFC_LP_SECONDARY_THRESHOLD  8
-#endif
-#endif
 
 /* Quick Timer */
 #ifndef QUICK_TIMER_TICKS_PER_SEC
@@ -527,9 +531,9 @@
 #define NFA_P2P_INCLUDED            TRUE
 #endif
 
-/* Timeout for waiting on other host in HCI Network to initialize */
-#ifndef NFA_HCI_NETWK_INIT_TIMEOUT
-#define NFA_HCI_NETWK_INIT_TIMEOUT  400
+/* Maximum Idle time (no hcp) to wait for EE DISC REQ Ntf(s) */
+#ifndef NFA_HCI_NETWK_INIT_IDLE_TIMEOUT
+#define NFA_HCI_NETWK_INIT_IDLE_TIMEOUT  1000
 #endif
 
 #ifndef NFA_HCI_MAX_HOST_IN_NETWORK
@@ -552,8 +556,8 @@
 #endif
 
 /* Timeout for waiting for the response to HCP Command packet */
-#ifndef NFA_HCI_CMD_RSP_TIMEOUT
-#define NFA_HCI_CMD_RSP_TIMEOUT    1000
+#ifndef NFA_HCI_RESPONSE_TIMEOUT
+#define NFA_HCI_RESPONSE_TIMEOUT    1000
 #endif
 
 /* Default poll duration (may be over-ridden using NFA_SetRfDiscoveryDuration) */
@@ -576,6 +580,11 @@
 #define NFA_DM_AUTO_PRESENCE_CHECK   FALSE  /* Android requires FALSE */
 #endif
 
+/* Default delay to auto presence check after sending raw frame */
+#ifndef NFA_DM_DEFAULT_PRESENCE_CHECK_START_DELAY
+#define NFA_DM_DEFAULT_PRESENCE_CHECK_START_DELAY   750
+#endif
+
 /* Time to restart discovery after deactivated */
 #ifndef NFA_DM_DISC_DELAY_DISCOVERY
 #define NFA_DM_DISC_DELAY_DISCOVERY     1000
@@ -593,7 +602,7 @@
 #endif
 
 #ifndef NFA_CHO_INCLUDED
-#define NFA_CHO_INCLUDED            TRUE
+#define NFA_CHO_INCLUDED            FALSE /* Anddroid must use FALSE to exclude CHO */
 #endif
 
 /* MIU for CHO              */
@@ -626,7 +635,7 @@
 #endif
 
 #ifndef NFA_SNEP_INCLUDED
-#define NFA_SNEP_INCLUDED               TRUE
+#define NFA_SNEP_INCLUDED               FALSE /* Android must use FALSE to exclude SNEP */
 #endif
 
 /* Max acceptable length */
@@ -656,7 +665,11 @@
 
 /* Max number of NFCEE supported */
 #ifndef NFA_EE_MAX_EE_SUPPORTED
+#ifdef NXP_EXT
+#define NFA_EE_MAX_EE_SUPPORTED         4
+#else
 #define NFA_EE_MAX_EE_SUPPORTED         3
+#endif
 #endif
 
 /* Maximum number of AID entries per target_handle  */
@@ -672,6 +685,19 @@
 #ifndef NFA_DTA_INCLUDED
 #define NFA_DTA_INCLUDED            TRUE
 #endif
+
+
+/*****************************************************************************
+**  Define HAL_WRITE depending on whether HAL is using shared GKI resources
+**  as the NFC stack.
+*****************************************************************************/
+#ifndef HAL_WRITE
+#define HAL_WRITE(p)    {nfc_cb.p_hal->write(p->len, (UINT8 *)(p+1) + p->offset); GKI_freebuf(p);}
+
+
+
+#endif /* HAL_WRITE */
+
 
 #endif /* NFC_TARGET_H */
 

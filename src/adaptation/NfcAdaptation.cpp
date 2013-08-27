@@ -15,6 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 #include "OverrideLog.h"
 #include "NfcAdaptation.h"
 extern "C"
@@ -29,16 +48,26 @@ extern "C"
 
 extern "C" void GKI_shutdown();
 extern void resetConfig();
+extern "C" void delete_stack_non_volatile_store ();
 
 NfcAdaptation* NfcAdaptation::mpInstance = NULL;
 ThreadMutex NfcAdaptation::sLock;
 nfc_nci_device_t* NfcAdaptation::mHalDeviceContext = NULL;
 tHAL_NFC_CBACK* NfcAdaptation::mHalCallback = NULL;
 tHAL_NFC_DATA_CBACK* NfcAdaptation::mHalDataCallback = NULL;
+ThreadCondVar NfcAdaptation::mHalOpenCompletedEvent;
+ThreadCondVar NfcAdaptation::mHalCloseCompletedEvent;
 
 UINT32 ScrProtocolTraceFlag = SCR_PROTO_TRACE_ALL; //0x017F00;
 UINT8 appl_trace_level = 0xff;
+#ifdef NXP_EXT
+UINT8 appl_dta_mode_flag = 0x00;
+#endif
 char bcm_nfc_location[120];
+
+static UINT8 nfa_dm_cfg[sizeof ( tNFA_DM_CFG ) ];
+extern tNFA_DM_CFG *p_nfa_dm_cfg;
+extern UINT8 nfa_ee_max_ee_cfg;
 
 /*******************************************************************************
 **
@@ -104,7 +133,22 @@ void NfcAdaptation::Initialize ()
         strcpy ( bcm_nfc_location, "/data/nfc" );
     if ( GetNumValue ( NAME_PROTOCOL_TRACE_LEVEL, &num, sizeof ( num ) ) )
         ScrProtocolTraceFlag = num;
+
+    if ( GetStrValue ( NAME_NFA_DM_CFG, (char*)nfa_dm_cfg, sizeof ( nfa_dm_cfg ) ) )
+        p_nfa_dm_cfg = ( tNFA_DM_CFG * ) &nfa_dm_cfg[0];
+
+    if ( GetNumValue ( NAME_NFA_MAX_EE_SUPPORTED, &num, sizeof ( num ) ) )
+    {
+        nfa_ee_max_ee_cfg = num;
+        ALOGD("%s: Overriding NFA_EE_MAX_EE_SUPPORTED to use %d", func, nfa_ee_max_ee_cfg);
+    }
+
     initializeGlobalAppLogLevel ();
+    if ( GetNumValue ( NAME_PRESERVE_STORAGE, (char*)&num, sizeof ( num ) ) &&
+            (num == 1) )
+        ALOGD ("%s: preserve stack NV store", __FUNCTION__);
+    else
+        delete_stack_non_volatile_store ();
 
     GKI_init ();
     GKI_enable ();
@@ -194,8 +238,6 @@ UINT32 NfcAdaptation::NFCA_TASK (UINT32 arg)
 UINT32 NfcAdaptation::Thread (UINT32 arg)
 {
     const char* func = "NfcAdaptation::Thread";
-    unsigned long num;
-    char temp[120];
     ALOGD ("%s: enter", func);
 
     {
@@ -431,7 +473,7 @@ BOOLEAN NfcAdaptation::HalPrediscover ()
 
     if (mHalDeviceContext)
     {
-        mHalDeviceContext->pre_discover (mHalDeviceContext);
+        retval = mHalDeviceContext->pre_discover (mHalDeviceContext);
     }
     return retval;
 }
@@ -477,6 +519,80 @@ void NfcAdaptation::HalPowerCycle ()
         mHalDeviceContext->power_cycle (mHalDeviceContext);
     }
 }
+
+
+/*******************************************************************************
+**
+** Function:    NfcAdaptation::DownloadFirmware
+**
+** Description: Download firmware patch files.
+**
+** Returns:     None.
+**
+*******************************************************************************/
+void NfcAdaptation::DownloadFirmware ()
+{
+    const char* func = "NfcAdaptation::DownloadFirmware";
+    ALOGD ("%s: enter", func);
+    HalInitialize ();
+
+    mHalOpenCompletedEvent.lock ();
+    ALOGD ("%s: try open HAL", func);
+    HalOpen (HalDownloadFirmwareCallback, HalDownloadFirmwareDataCallback);
+    mHalOpenCompletedEvent.wait ();
+
+    mHalCloseCompletedEvent.lock ();
+    ALOGD ("%s: try close HAL", func);
+    HalClose ();
+    mHalCloseCompletedEvent.wait ();
+
+    HalTerminate ();
+    ALOGD ("%s: exit", func);
+}
+
+/*******************************************************************************
+**
+** Function:    NfcAdaptation::HalDownloadFirmwareCallback
+**
+** Description: Receive events from the HAL.
+**
+** Returns:     None.
+**
+*******************************************************************************/
+void NfcAdaptation::HalDownloadFirmwareCallback (nfc_event_t event, nfc_status_t event_status)
+{
+    const char* func = "NfcAdaptation::HalDownloadFirmwareCallback";
+    ALOGD ("%s: event=0x%X", func, event);
+    switch (event)
+    {
+    case HAL_NFC_OPEN_CPLT_EVT:
+        {
+            ALOGD ("%s: HAL_NFC_OPEN_CPLT_EVT", func);
+            mHalOpenCompletedEvent.signal ();
+            break;
+        }
+    case HAL_NFC_CLOSE_CPLT_EVT:
+        {
+            ALOGD ("%s: HAL_NFC_CLOSE_CPLT_EVT", func);
+            mHalCloseCompletedEvent.signal ();
+            break;
+        }
+    }
+}
+
+/*******************************************************************************
+**
+** Function:    NfcAdaptation::HalDownloadFirmwareDataCallback
+**
+** Description: Receive data events from the HAL.
+**
+** Returns:     None.
+**
+*******************************************************************************/
+void NfcAdaptation::HalDownloadFirmwareDataCallback (uint16_t data_len, uint8_t* p_data)
+{
+}
+
 
 /*******************************************************************************
 **

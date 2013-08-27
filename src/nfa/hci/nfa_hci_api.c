@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright (C) 2010-2012 Broadcom Corporation
+ *  Copyright (C) 2010-2013 Broadcom Corporation
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+
 
 /******************************************************************************
  *
@@ -902,13 +903,13 @@ tNFA_STATUS NFA_HciAddStaticPipe (tNFA_HANDLE hci_handle, UINT8 host, UINT8 gate
         NFA_TRACE_API1 ("NFA_HciAddStaticPipe (): Invalid Gate:0x%02x", gate);
         return (NFA_STATUS_FAILED);
     }
-
+#ifndef NXP_EXT
     if (pipe <= NFA_HCI_LAST_DYNAMIC_PIPE)
     {
         NFA_TRACE_API1 ("NFA_HciAddStaticPipe (): Invalid Pipe:0x%02x", pipe);
         return (NFA_STATUS_FAILED);
     }
-
+#endif
     NFA_TRACE_API2 ("NFA_HciAddStaticPipe (): hci_handle:0x%04x, pipe:0x%02X", hci_handle, pipe);
 
     /* Request HCI to delete a pipe created by the application identified by hci handle */
