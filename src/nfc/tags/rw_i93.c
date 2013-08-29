@@ -3194,7 +3194,7 @@ static void rw_i93_data_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p_
 tNFC_STATUS rw_i93_select (UINT8 *p_uid)
 {
     tRW_I93_CB  *p_i93 = &rw_cb.tcb.i93;
-    UINT8       uid[I93_UID_BYTE_LEN], *p;
+    UINT8       uid[I93_UID_BYTE_LEN];
 
     RW_TRACE_DEBUG0 ("rw_i93_select ()");
 
@@ -3203,8 +3203,7 @@ tNFC_STATUS rw_i93_select (UINT8 *p_uid)
     p_i93->state = RW_I93_STATE_IDLE;
 
     /* convert UID to big endian format - MSB(0xE0) in first byte */
-    p = uid;
-    STREAM_TO_ARRAY8 (p, p_uid);
+    STREAM_TO_ARRAY8 (uid, p_uid);
 
     rw_i93_get_product_version (uid);
 

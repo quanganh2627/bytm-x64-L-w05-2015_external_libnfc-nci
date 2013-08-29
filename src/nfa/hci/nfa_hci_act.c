@@ -438,17 +438,18 @@ static void nfa_hci_api_get_gate_pipe_list (tNFA_HCI_EVENT_DATA *p_evt_data)
         }
     }
 
-    evt_data.gates_pipes.num_uicc_created_pipes = 0;
     /* Loop through all pipes that are connected to connectivity gate */
-    for (xx = 0, pp = nfa_hci_cb.cfg.dyn_pipes; xx < NFA_HCI_MAX_PIPE_CB; xx++, pp++)
+    for (xx = 0, pp = nfa_hci_cb.cfg.dyn_pipes, evt_data.gates_pipes.num_uicc_created_pipes = 0;
+            xx < NFA_HCI_MAX_PIPE_CB, evt_data.gates_pipes.num_uicc_created_pipes < NFA_HCI_MAX_HOST_IN_NETWORK;
+            xx++, pp++, evt_data.gates_pipes.num_uicc_created_pipes++)
     {
         if (pp->pipe_id != 0  && pp->local_gate == NFA_HCI_CONNECTIVITY_GATE)
         {
-            memcpy (&evt_data.gates_pipes.uicc_created_pipe [evt_data.gates_pipes.num_uicc_created_pipes++], pp, sizeof (tNFA_HCI_PIPE_INFO));
+            memcpy (&evt_data.gates_pipes.uicc_created_pipe [evt_data.gates_pipes.num_uicc_created_pipes], pp, sizeof (tNFA_HCI_PIPE_INFO));
         }
         else if (pp->pipe_id != 0  && pp->local_gate == NFA_HCI_LOOP_BACK_GATE)
         {
-            memcpy (&evt_data.gates_pipes.uicc_created_pipe [evt_data.gates_pipes.num_uicc_created_pipes++], pp, sizeof (tNFA_HCI_PIPE_INFO));
+            memcpy (&evt_data.gates_pipes.uicc_created_pipe [evt_data.gates_pipes.num_uicc_created_pipes], pp, sizeof (tNFA_HCI_PIPE_INFO));
         }
     }
 

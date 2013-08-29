@@ -212,20 +212,20 @@ void delete_stack_non_volatile_store ()
 
     memset (filename, 0, sizeof(filename));
     memset (filename2, 0, sizeof(filename2));
-    strcpy(filename2, bcm_nfc_location);
+    strncpy(filename2, bcm_nfc_location, sizeof(filename2));
     strncat(filename2, sNfaStorageBin, sizeof(filename2)-strlen(filename2)-1);
     if (strlen(filename2) > 200)
     {
         ALOGE ("%s: filename too long", __FUNCTION__);
         return;
     }
-    sprintf (filename, "%s%u", filename2, DH_NV_BLOCK);
+    snprintf (filename, sizeof(filename), "%s%u", filename2, DH_NV_BLOCK);
     remove (filename);
-    sprintf (filename, "%s%u", filename2, HC_F3_NV_BLOCK);
+    snprintf (filename, sizeof(filename), "%s%u", filename2, HC_F3_NV_BLOCK);
     remove (filename);
-    sprintf (filename, "%s%u", filename2, HC_F4_NV_BLOCK);
+    snprintf (filename, sizeof(filename), "%s%u", filename2, HC_F4_NV_BLOCK);
     remove (filename);
-    sprintf (filename, "%s%u", filename2, HC_F2_NV_BLOCK);
+    snprintf (filename, sizeof(filename), "%s%u", filename2, HC_F2_NV_BLOCK);
     remove (filename);
 }
 
