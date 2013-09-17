@@ -195,7 +195,7 @@
 /* The size of the buffers in pool 3. */
 #ifndef GKI_BUF3_SIZE
 #ifdef NXP_EXT
-#define GKI_BUF3_SIZE               (16*1024)
+#define GKI_BUF3_SIZE               (32*1024)
 #else
 #define GKI_BUF3_SIZE               2500
 #endif

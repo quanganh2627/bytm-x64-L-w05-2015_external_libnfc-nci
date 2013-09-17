@@ -1034,6 +1034,9 @@ void nfa_dm_start_rf_discover (void)
                 {
                     /* NFCC can listen T3T based on NFCID routing */
                     listen_mask |= (nfa_dm_cb.disc_cb.entry[xx].requested_disc_mask  & NFA_DM_DISC_MASK_LF_T3T);
+#ifdef NXP_EXT
+                    listen_mask |= (nfa_dm_cb.disc_cb.entry[xx].requested_disc_mask  & NFA_DM_DISC_MASK_LF_NFC_DEP);
+#endif
                 }
 
                 /* NFC-B Prime */
@@ -1221,6 +1224,37 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
         return (NFA_STATUS_FAILED);
     }
 
+#ifdef NXP_EXT
+    /*
+     * if this is Proprietary RF interface, notify activation as START_READER_EVT.
+     *
+     * Code to handle the Reader over SWP.
+     * 1. Pass this info to JNI as START_READER_EVT.
+     * return (NFA_STATUS_OK)
+     */
+    if (p_data->activate.intf_param.type  == NCI_INTERFACE_UICC_DIRECT || p_data->activate.intf_param.type == NCI_INTERFACE_ESE_DIRECT)
+    {
+        for (xx = 0; xx < NFA_DM_DISC_NUM_ENTRIES; xx++)
+        {
+            if (  (nfa_dm_cb.disc_cb.entry[xx].in_use)
+                &&(nfa_dm_cb.disc_cb.entry[xx].host_id != NFA_DM_DISC_HOST_ID_DH))
+            {
+                nfa_dm_cb.disc_cb.activated_rf_interface = p_data->activate.intf_param.type;
+                nfa_dm_cb.disc_cb.activated_handle       = xx;
+
+                NFA_TRACE_DEBUG2 ("activated_rf_uicc-ese_interface:0x%x, activated_handle: 0x%x",
+                                   nfa_dm_cb.disc_cb.activated_rf_interface,
+                                   nfa_dm_cb.disc_cb.activated_handle);
+
+                if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
+                    (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_ACTIVATED_EVT, p_data);
+
+                return (NFA_STATUS_OK);
+            }
+        }
+        return (NFA_STATUS_FAILED);
+    }
+#endif
     /* get bit mask of technolgies/mode and protocol */
     activated_disc_mask = nfa_dm_disc_get_disc_mask (tech_n_mode, protocol);
 
@@ -1309,7 +1343,21 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
         xx = iso_dep_t3t__listen;
     }
 
+#ifdef NXP_EXT
+    if(protocol == NFC_PROTOCOL_NFC_DEP &&
+            (tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_F_ACTIVE ||
+                    tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE ||
+                    tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A
+                    )
+      )
+    {
+        xx = 1;
+    }
+
+    if (xx < NFA_DM_DISC_NUM_ENTRIES || protocol == NFC_PROTOCOL_NFC_DEP)
+#else
     if (xx < NFA_DM_DISC_NUM_ENTRIES)
+#endif
     {
         nfa_dm_cb.disc_cb.activated_tech_mode    = tech_n_mode;
         nfa_dm_cb.disc_cb.activated_rf_disc_id   = p_data->activate.rf_disc_id;
@@ -1770,6 +1818,18 @@ static void nfa_dm_disc_sm_discovery (tNFA_DM_RF_DISC_SM_EVENT event,
             {
                 nfa_dm_disc_new_state (NFA_DM_RFST_LISTEN_ACTIVE);
             }
+#ifdef NXP_EXT
+            /*
+             * Handle the Reader over SWP.
+             * Add condition UICC_DIRECT_INTF/ESE_DIRECT_INTF
+             * set new state NFA_DM_RFST_POLL_ACTIVE
+             * */
+            else if (p_data->nfc_discover.activate.intf_param.type == NCI_INTERFACE_UICC_DIRECT ||
+                    p_data->nfc_discover.activate.intf_param.type == NCI_INTERFACE_ESE_DIRECT )
+            {
+                nfa_dm_disc_new_state (NFA_DM_RFST_POLL_ACTIVE);
+            }
+#endif
             else if (p_data->nfc_discover.activate.rf_tech_param.mode & 0x80)
             {
                 /* Listen mode */
@@ -2028,7 +2088,6 @@ static void nfa_dm_disc_sm_poll_active (tNFA_DM_RF_DISC_SM_EVENT event,
             nfa_dm_cb.presence_check_deact_type    = p_data->deactivate_type;
             status = nfa_dm_send_deactivate_cmd(p_data->deactivate_type);
             break;
-
         }
 #endif
         if (old_pres_check_flag)
