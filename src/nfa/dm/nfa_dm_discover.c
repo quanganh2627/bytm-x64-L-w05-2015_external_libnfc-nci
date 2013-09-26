@@ -1344,12 +1344,11 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
     }
 
 #ifdef NXP_EXT
-    if(protocol == NFC_PROTOCOL_NFC_DEP &&
+    if (protocol == NFC_PROTOCOL_NFC_DEP &&
             (tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_F_ACTIVE ||
                     tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE ||
                     tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A
-                    )
-      )
+                    ))
     {
         xx = 1;
     }
@@ -1369,10 +1368,25 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
                            nfa_dm_cb.disc_cb.activated_protocol,
                            nfa_dm_cb.disc_cb.activated_handle);
 
+#ifdef NXP_EXT
+        if (xx < NFA_DM_DISC_NUM_ENTRIES)
+        {
+            if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
+                (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_ACTIVATED_EVT, p_data);
+
+            return (NFA_STATUS_OK);
+        }
+        else
+        {
+            NFA_TRACE_ERROR0 ("nfa_dm_disc_notify_activation():  index error");
+            return (NFA_STATUS_FAILED);
+        }
+#else
         if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
             (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_ACTIVATED_EVT, p_data);
 
         return (NFA_STATUS_OK);
+#endif
     }
     else
     {

@@ -58,7 +58,11 @@
 
 /* 0xE0 ~0xFF are proprietary status codes */
 #define NFC_STATUS_CMD_STARTED          0xE3/* Command started successfully                     */
+#ifdef NXP_EXT
+#define NFC_STATUS_HW_TIMEOUT           0xEC
+#else
 #define NFC_STATUS_HW_TIMEOUT           0xE4/* NFCC Timeout in responding to an NCI command     */
+#endif
 #define NFC_STATUS_CONTINUE             0xE5/* More (same) event to follow                      */
 #define NFC_STATUS_REFUSED              0xE6/* API is called to perform illegal function        */
 #define NFC_STATUS_BAD_RESP             0xE7/* Wrong format of R-APDU, CC file or NDEF file     */
