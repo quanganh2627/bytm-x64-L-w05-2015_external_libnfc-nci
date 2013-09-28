@@ -158,6 +158,10 @@ typedef struct
     tNFA_NFC_PROTOCOL       lb_protocol;        /* Listen B protocol    */
     tNFA_NFC_PROTOCOL       lf_protocol;        /* Listen F protocol    */
     tNFA_NFC_PROTOCOL       lbp_protocol;       /* Listen B' protocol   */
+#ifdef NXP_EXT
+    tNFA_NFC_PROTOCOL       pa_protocol;        /* Passive poll A SWP Reader   */
+    tNFA_NFC_PROTOCOL       pb_protocol;        /* Passive poll B SWP Reader   */
+#endif
 } tNFA_EE_ECB;
 
 /* data type for NFA_EE_API_DISCOVER_EVT */

@@ -142,7 +142,9 @@ typedef void (tNFC_PWR_ST_CBACK) (void);
 
 /* NCI command buffer contains a VSC (in BT_HDR.layer_specific) */
 #define NFC_WAIT_RSP_VSC            0x01
-
+#ifdef NXP_EXT
+#define NFC_WAIT_RSP_NXP            0x02
+#endif
 /* NFC control blocks */
 typedef struct
 {
@@ -153,6 +155,9 @@ typedef struct
     tNFC_RESPONSE_CBACK *p_resp_cback;
     tNFC_TEST_CBACK     *p_test_cback;
     tNFC_VS_CBACK       *p_vs_cb[NFC_NUM_VS_CBACKS];/* Register for vendor specific events  */
+#ifdef NXP_EXT
+    UINT8               nxpCbflag;
+#endif
 
 #if (NFC_RW_ONLY == FALSE)
     /* NFCC information at init rsp */

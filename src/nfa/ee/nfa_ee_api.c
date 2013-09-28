@@ -124,6 +124,12 @@ tNFA_STATUS NFA_EeGetInfo(UINT8        *p_num_nfcee,
         p_info->ee_status       = p_cb->ee_status;
         p_info->num_interface   = p_cb->num_interface;
         p_info->num_tlvs        = p_cb->num_tlvs;
+#ifdef NXP_EXT
+        p_info->la_protocol =  p_cb->la_protocol;
+        p_info->lb_protocol =  p_cb->lb_protocol;
+        p_info->lf_protocol =  p_cb->lf_protocol;
+        p_info->lbp_protocol =  p_cb->lbp_protocol;
+#endif
         memcpy(p_info->ee_interface, p_cb->ee_interface, p_cb->num_interface);
         memcpy(p_info->ee_tlv, p_cb->ee_tlv, p_cb->num_tlvs * sizeof(tNFA_EE_TLV));
         p_info++;

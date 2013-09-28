@@ -355,6 +355,8 @@ typedef UINT8 tNCI_STATUS;
 #define NCI_INTERFACE_FIRST_VS          0x80
 #ifdef NXP_EXT
 #define NCI_INTERFACE_MIFARE            0x80
+#define NCI_INTERFACE_UICC_DIRECT       0x81
+#define NCI_INTERFACE_ESE_DIRECT        0x82
 #endif
 typedef UINT8 tNCI_INTF_TYPE;
 

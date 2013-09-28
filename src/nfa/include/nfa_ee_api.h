@@ -34,6 +34,10 @@
 *****************************************************************************/
 #define NFA_MAX_AID_LEN             NFC_MAX_AID_LEN /* 16 per ISO 7816 specification    */
 #define NFA_EE_HANDLE_DH            (NFA_HANDLE_GROUP_EE|NFC_DH_ID)
+#ifdef NXP_EXT
+extern  UINT8 NFA_REMOVE_ALL_AID[];
+#define NFA_REMOVE_ALL_AID_LEN      (0x08)
+#endif
 
 /* NFA EE callback events */
 enum
@@ -110,6 +114,12 @@ typedef struct
     tNFA_EE_INTERFACE   ee_interface[NFC_MAX_EE_INTERFACE];/* NFCEE supported interface */
     UINT8               num_tlvs;               /* number of TLVs           */
     tNFA_EE_TLV         ee_tlv[NFC_MAX_EE_TLVS];/* the TLV                  */
+#ifdef NXP_EXT
+    tNFA_NFC_PROTOCOL       la_protocol;        /* Listen A protocol    */
+    tNFA_NFC_PROTOCOL       lb_protocol;        /* Listen B protocol    */
+    tNFA_NFC_PROTOCOL       lf_protocol;        /* Listen F protocol    */
+    tNFA_NFC_PROTOCOL       lbp_protocol;       /* Listen B' protocol   */
+#endif
 } tNFA_EE_INFO;
 
 
@@ -164,6 +174,10 @@ typedef struct
     tNFA_NFC_PROTOCOL   lb_protocol;        /* Listen B protocol    */
     tNFA_NFC_PROTOCOL   lf_protocol;        /* Listen F protocol    */
     tNFA_NFC_PROTOCOL   lbp_protocol;       /* Listen B' protocol   */
+#ifdef NXP_EXT
+    tNFA_NFC_PROTOCOL   pa_protocol;        /* Passive poll A SWP Reader   */
+    tNFA_NFC_PROTOCOL   pb_protocol;        /* Passive poll B SWP Reader   */
+#endif
 } tNFA_EE_DISCOVER_INFO;
 
 /* Data for NFA_EE_DISCOVER_REQ_EVT */

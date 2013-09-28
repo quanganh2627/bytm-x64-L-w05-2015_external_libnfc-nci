@@ -48,14 +48,14 @@
 
 #ifdef NXP_EXT
 #define RW_T4T_STATE_NDEF_FORMAT                0x07    /* performing NDEF format               */
-#define RW_T4T_SUBSTATE_WAIT_GET_HW_VERSION     0x08
-#define RW_T4T_SUBSTATE_WAIT_GET_SW_VERSION     0x09
-#define RW_T4T_SUBSTATE_WAIT_GET_UID            0x0A
-#define RW_T4T_SUBSTATE_WAIT_CREATE_APP         0x0B
-#define RW_T4T_SUBSTATE_WAIT_CREATE_CC          0x0C
-#define RW_T4T_SUBSTATE_WAIT_CREATE_NDEF        0x0D
-#define RW_T4T_SUBSTATE_WAIT_WRITE_CC           0x0E
-#define RW_T4T_SUBSTATE_WAIT_WRITE_NDEF         0x0F
+#define RW_T4T_SUBSTATE_WAIT_GET_HW_VERSION     0x09
+#define RW_T4T_SUBSTATE_WAIT_GET_SW_VERSION     0x0A
+#define RW_T4T_SUBSTATE_WAIT_GET_UID            0x0B
+#define RW_T4T_SUBSTATE_WAIT_CREATE_APP         0x0C
+#define RW_T4T_SUBSTATE_WAIT_CREATE_CC          0x0D
+#define RW_T4T_SUBSTATE_WAIT_CREATE_NDEF        0x0E
+#define RW_T4T_SUBSTATE_WAIT_WRITE_CC           0x0F
+#define RW_T4T_SUBSTATE_WAIT_WRITE_NDEF         0x10
 #endif
 
 /* sub state */

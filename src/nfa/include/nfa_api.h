@@ -146,9 +146,15 @@ typedef UINT8 tNFA_PROTOCOL_MASK;
 #define NFA_DM_SET_CONFIG_EVT           2   /* Result of NFA_SetConfig          */
 #define NFA_DM_GET_CONFIG_EVT           3   /* Result of NFA_GetConfig          */
 #define NFA_DM_PWR_MODE_CHANGE_EVT      4   /* Result of NFA_PowerOffSleepMode  */
-#define NFA_DM_RF_FIELD_EVT	            5   /* Status of RF Field               */
+#define NFA_DM_RF_FIELD_EVT             5   /* Status of RF Field               */
 #define NFA_DM_NFCC_TIMEOUT_EVT         6   /* NFCC is not responding           */
 #define NFA_DM_NFCC_TRANSPORT_ERR_EVT   7   /* NCI Tranport error               */
+#ifdef NXP_EXT
+/* Reader over SWP Events*/
+#define NFA_RD_SWP_READER_REQUESTED     0
+#define NFA_RD_SWP_READER_START         1
+#define NFA_RD_SWP_READER_STOP          2
+#endif
 
 #define NFA_DM_MAX_UICC                 2   /* Max number of UICC               */
 
@@ -1131,6 +1137,28 @@ NFC_API extern tNFA_STATUS NFA_SendVsCommand (UINT8            oid,
                                               UINT8            *p_cmd_params,
                                               tNFA_VSC_CBACK   *p_cback);
 
+#ifdef NXP_EXT
+/*******************************************************************************
+**
+** Function         NFA_SendNxpNciCommand
+**
+** Description      This function is called to send NXP NCI Vendor Specific
+**                  command to NFCC.
+**
+**                  cmd_params_len  - The command parameter len
+**                  p_cmd_params    - The command parameter
+**                  p_cback         - The callback function to receive the command
+**
+** Returns          NFA_STATUS_OK if successfully initiated
+**                  NFA_STATUS_FAILED otherwise
+**
+*******************************************************************************/
+
+NFC_API extern tNFA_STATUS NFA_SendNxpNciCommand (UINT8            cmd_params_len,
+                                                  UINT8            *p_cmd_params,
+                                                  tNFA_VSC_CBACK   *p_cback);
+#endif
+
 /*******************************************************************************
 **
 ** Function         NFA_SetTraceLevel
@@ -1149,4 +1177,3 @@ NFC_API extern UINT8 NFA_SetTraceLevel (UINT8 new_level);
 #endif
 
 #endif /* NFA_API_H */
-

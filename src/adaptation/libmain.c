@@ -212,8 +212,8 @@ void delete_stack_non_volatile_store ()
 
     memset (filename, 0, sizeof(filename));
     memset (filename2, 0, sizeof(filename2));
-    strncpy(filename2, bcm_nfc_location, sizeof(filename2));
-    strncat(filename2, sNfaStorageBin, sizeof(filename2)-strlen(filename2)-1);
+    strlcpy(filename2, bcm_nfc_location, sizeof(filename2));
+    strlcat(filename2, sNfaStorageBin, sizeof(filename2)-strlen(filename2)-1);
     if (strlen(filename2) > 200)
     {
         ALOGE ("%s: filename too long", __FUNCTION__);

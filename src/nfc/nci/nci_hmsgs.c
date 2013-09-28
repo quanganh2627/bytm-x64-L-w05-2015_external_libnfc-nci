@@ -111,7 +111,37 @@ UINT8 nci_snd_core_get_config (UINT8 *param_ids, UINT8 num_ids)
 
     if ((p = NCI_GET_CMD_BUF (num_ids)) == NULL)
         return (NCI_STATUS_FAILED);
+#ifdef NXP_EXT
+    UINT8 bytes;
+    UINT8 propConfigCnt;
+    UINT32 idx = 0;
+    UINT8 *params =  param_ids;
+    propConfigCnt=0;
+    for(idx=0; idx<num_ids; idx++)
+    {
+        if(*params == 0xA0)
+        {
+            params++;
+            propConfigCnt++;
+        }
+        params++;
 
+    }
+    bytes = (num_ids - propConfigCnt) + (propConfigCnt<<1);
+
+    p->event            = BT_EVT_TO_NFC_NCI;
+    p->len              = NCI_MSG_HDR_SIZE + bytes + 1;
+    p->offset           = NCI_MSG_OFFSET_SIZE;
+    p->layer_specific   = 0;
+    pp                  = (UINT8 *) (p + 1) + p->offset;
+
+    NCI_MSG_BLD_HDR0 (pp, NCI_MT_CMD, NCI_GID_CORE);
+    NCI_MSG_BLD_HDR1 (pp, NCI_MSG_CORE_GET_CONFIG);
+    UINT8_TO_STREAM (pp, (UINT8) (bytes + 1));
+    UINT8_TO_STREAM (pp, num_ids);
+    ARRAY_TO_STREAM (pp, param_ids, bytes);
+
+#else
     p->event            = BT_EVT_TO_NFC_NCI;
     p->len              = NCI_MSG_HDR_SIZE + num_ids + 1;
     p->offset           = NCI_MSG_OFFSET_SIZE;
@@ -123,7 +153,7 @@ UINT8 nci_snd_core_get_config (UINT8 *param_ids, UINT8 num_ids)
     UINT8_TO_STREAM (pp, (UINT8) (num_ids + 1));
     UINT8_TO_STREAM (pp, num_ids);
     ARRAY_TO_STREAM (pp, param_ids, num_ids);
-
+#endif
     nfc_ncif_send_cmd (p);
     return (NCI_STATUS_OK);
 }

@@ -448,6 +448,39 @@ void nci_proc_prop_rsp (BT_HDR *p_msg)
         (*p_cback) ((tNFC_VS_EVT) (NCI_RSP_BIT|op_code), p_msg->len, p_evt);
 }
 
+#ifdef NXP_EXT
+/*******************************************************************************
+**
+** Function         nci_proc_prop_nxp_rsp
+**
+** Description      Process NXP NCI responses
+**
+** Returns          void
+**
+*******************************************************************************/
+void nci_proc_prop_nxp_rsp (BT_HDR *p_msg)
+{
+    UINT8   *p;
+    UINT8   *p_evt;
+    UINT8   *pp, len, op_code;
+    tNFC_VS_CBACK   *p_cback = (tNFC_VS_CBACK *)nfc_cb.p_vsc_cback;
+
+    /* find the start of the NCI message and parse the NCI header */
+    p   = p_evt = (UINT8 *) (p_msg + 1) + p_msg->offset;
+    pp  = p+1;
+    NCI_MSG_PRS_HDR1 (pp, op_code);
+    len = *pp++;
+
+    /*If there's a pending/stored command, restore the associated address of the callback function */
+    if (p_cback)
+    {
+        (*p_cback) ((tNFC_VS_EVT) (NCI_RSP_BIT|op_code), p_msg->len, p_evt);
+        nfc_cb.p_vsc_cback = NULL;
+    }
+    nfc_ncif_update_window ();
+}
+#endif
+
 /*******************************************************************************
 **
 ** Function         nci_proc_prop_ntf

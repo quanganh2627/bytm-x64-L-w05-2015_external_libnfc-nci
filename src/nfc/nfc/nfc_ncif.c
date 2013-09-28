@@ -283,6 +283,14 @@ void nfc_ncif_check_cmd_queue (BT_HDR *p_buf)
                 /* save the callback for NCI VSCs)  */
                 nfc_cb.p_vsc_cback = (void *)((tNFC_NCI_VS_MSG *)p_buf)->p_cback;
             }
+#ifdef NXP_EXT
+            else if (p_buf->layer_specific == NFC_WAIT_RSP_NXP)
+            {
+                /* save the callback for NCI NXPs)  */
+                nfc_cb.p_vsc_cback = (void *)((tNFC_NCI_VS_MSG *)p_buf)->p_cback;
+                nfc_cb.nxpCbflag = TRUE;
+            }
+#endif
 
             /* send to HAL */
             HAL_WRITE(p_buf);
@@ -368,6 +376,14 @@ BOOLEAN nfc_ncif_process_event (BT_HDR *p_msg)
     UINT8   oid;
     UINT8   *p_old, old_gid, old_oid, old_mt;
 
+#ifdef NXP_EXT
+    if (nfc_cb.nxpCbflag == TRUE)
+    {
+        nci_proc_prop_nxp_rsp(p_msg);
+        nfc_cb.nxpCbflag = FALSE;
+        return (free);
+    }
+#endif
     p = (UINT8 *) (p_msg + 1) + p_msg->offset;
 
     pp = p;
@@ -954,7 +970,17 @@ void nfc_ncif_proc_activate (UINT8 *p, UINT8 len)
             p_pa->hr[1]     = *p++;
         }
     }
-
+#ifdef NXP_EXT
+    /*
+     * Code to handle the Reader over SWP.
+     * 1. Do not activate tag for this NTF.
+     * 2. Pass this info to JNI as START_READER_EVT.
+     */
+    else if (evt_data.activate.intf_param.type == NCI_INTERFACE_UICC_DIRECT || evt_data.activate.intf_param.type == NCI_INTERFACE_ESE_DIRECT)
+    {
+        NFC_TRACE_DEBUG1("nfc_ncif_proc_activate:interface type  %x", evt_data.activate.intf_param.type);
+    }
+#endif
     p_cb->act_protocol  = evt_data.activate.protocol;
     p_cb->buff_size     = buff_size;
     p_cb->num_buff      = num_buff;
