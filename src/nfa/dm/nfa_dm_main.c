@@ -285,13 +285,24 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
         /*
         **  Listen B Configuration
         */
-#ifndef NXP_EXT
         case NFC_PMID_LB_SENSB_INFO:
+#ifdef NXP_EXT
+            if(app_init == TRUE)
+            {
+                p_stored  = nfa_dm_cb.params.lb_sensb_info;
+                max_len   = NCI_PARAM_LEN_LB_SENSB_INFO;
+                p_cur_len = &nfa_dm_cb.params.lb_sensb_info_len;
+            }
+            else
+            {
+                update = FALSE;
+            }
+#else
             p_stored  = nfa_dm_cb.params.lb_sensb_info;
             max_len   = NCI_PARAM_LEN_LB_SENSB_INFO;
             p_cur_len = &nfa_dm_cb.params.lb_sensb_info_len;
-            break;
 #endif
+            break;
         case NFC_PMID_LB_NFCID0:
             p_stored  = nfa_dm_cb.params.lb_nfcid0;
             max_len   = NCI_PARAM_LEN_LB_NFCID0;

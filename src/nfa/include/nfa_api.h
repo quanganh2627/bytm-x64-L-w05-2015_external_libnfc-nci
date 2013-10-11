@@ -150,6 +150,7 @@ typedef UINT8 tNFA_PROTOCOL_MASK;
 #define NFA_DM_NFCC_TIMEOUT_EVT         6   /* NFCC is not responding           */
 #define NFA_DM_NFCC_TRANSPORT_ERR_EVT   7   /* NCI Tranport error               */
 #ifdef NXP_EXT
+#define NFA_DM_EMVCO_PCD_COLLISION_EVT  8   /* Collision event in case of EMV-CO Profile (Nxp)*/
 /* Reader over SWP Events*/
 #define NFA_RD_SWP_READER_REQUESTED     0
 #define NFA_RD_SWP_READER_START         1

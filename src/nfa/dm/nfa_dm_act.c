@@ -380,6 +380,13 @@ static void nfa_dm_nfc_response_cback (tNFC_RESPONSE_EVT event, tNFC_RESPONSE *p
         break;
 
     case NFC_GEN_ERROR_REVT:                     /* generic error command or notification */
+#ifdef NXP_EXT
+        if (p_data->status == 0xE4) //STATUS_EMVCO_PCD_COLLISION
+        {
+            dm_cback_data.status = p_data->status;
+            (*nfa_dm_cb.p_dm_cback) (NFA_DM_EMVCO_PCD_COLLISION_EVT, &dm_cback_data);
+        }
+#endif
         break;
 
     case NFC_NFCC_RESTART_REVT:                  /* NFCC has been re-initialized */
