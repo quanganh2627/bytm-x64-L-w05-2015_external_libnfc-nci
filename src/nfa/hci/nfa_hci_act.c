@@ -1721,10 +1721,15 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
 #ifdef NXP_EXT
     else if (p_pipe->local_gate == NFC_HCI_DEFAULT_DEST_GATE)
     {
-        /* Check if data packet is a command, response or event */
-        p_gate = nfa_hci_cb.cfg.dyn_gates;
-        p_gate->gate_owner = 0x0800;
+        p_gate = nfa_hciu_find_gate_by_gid (p_pipe->local_gate);
 
+        if(p_gate == NULL)
+        {
+           NFA_TRACE_ERROR1 ("nfa_hci_handle_dyn_pipe_pkt - Unknown gate %d", p_pipe->local_gate);
+           return;
+        }
+
+        /* Check if data packet is a command, response or event */
         switch (nfa_hci_cb.type)
         {
         case NFA_HCI_COMMAND_TYPE:
