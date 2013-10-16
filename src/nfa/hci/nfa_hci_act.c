@@ -1692,6 +1692,25 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
     tNFA_HCI_DYN_PIPE   *p_pipe = nfa_hciu_find_pipe_by_pid (pipe_id);
     tNFA_HCI_DYN_GATE   *p_gate;
 
+#ifdef NXP_EXT
+    /* On NXP chipset, connectivity pipes always receive the same id.
+     * If the pipe doesn't exist and if the pipe id is one of the ids which
+     * are normally reserved for connectivity then it's possible to fix
+     * the error by artificially creating the missing pipe.
+     */
+    if ((p_pipe == NULL) &&
+        ((pipe_id == NFC_HCI_DEFAULT_UICC_CONN_PIPE)  ||  (pipe_id == NFC_HCI_DEFAULT_ESE_CONN_PIPE)))
+    {
+       UINT8 host = (pipe_id == NFC_HCI_DEFAULT_UICC_CONN_PIPE) ? NFA_HCI_UICC_HOST : NFA_HCI_ESE_HOST;
+
+       NFA_TRACE_DEBUG1 ("nfa_hci_handle_dyn_pipe_pkt - Connectivity event received on pipe %02x which is closed.", pipe_id);
+       NFA_TRACE_DEBUG2 ("nfa_hci_handle_dyn_pipe_pkt - NXP WA: pipe %02x is going to be created (host %02x)", pipe_id, host);
+
+       tNFA_HCI_RESPONSE response = nfa_hciu_add_pipe_to_gate (pipe_id, NFA_HCI_CONNECTIVITY_GATE, host, NFA_HCI_CONNECTIVITY_GATE);
+       p_pipe = nfa_hciu_find_pipe_by_pid (pipe_id);
+    }
+#endif
+
     if (p_pipe == NULL)
     {
         /* Invalid pipe ID */
