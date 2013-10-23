@@ -1475,11 +1475,19 @@ static void nfa_dm_disc_notify_deactivation (tNFA_DM_RF_DISC_SM_EVENT sm_event,
         {
             xx = nfa_dm_cb.disc_cb.activated_handle;
 
-            if ((xx < NFA_DM_DISC_NUM_ENTRIES) && (nfa_dm_cb.disc_cb.entry[xx].in_use))
+#ifdef NXP_EXT
+            if (xx < NFA_DM_DISC_NUM_ENTRIES)
             {
-                if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
+                if ( nfa_dm_cb.disc_cb.entry[xx].in_use && nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
                     (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_DEACTIVATED_EVT, p_data);
             }
+#else
+            if ((xx < NFA_DM_DISC_NUM_ENTRIES) && (nfa_dm_cb.disc_cb.entry[xx].in_use))
+            {
+                if ( nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
+                    (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_DEACTIVATED_EVT, p_data);
+            }
+#endif
         }
     }
 
