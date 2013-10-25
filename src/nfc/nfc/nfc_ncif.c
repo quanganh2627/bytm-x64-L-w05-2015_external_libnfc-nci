@@ -1489,11 +1489,20 @@ void nfc_ncif_proc_reset_rsp (UINT8 *p, BOOLEAN is_ntf)
         NFC_TRACE_ERROR1 ("reset notification nfc_state :0x%x ", nfc_cb.nfc_state);
         NFC_TRACE_ERROR1 ("reset notification!!:0x%x ", status);
 
+        memcpy(nfc_cb.recov_last_hdr, nfc_cb.last_hdr, NFC_SAVED_HDR_SIZE);
+        memcpy(nfc_cb.recov_last_cmd, nfc_cb.last_cmd, NFC_SAVED_CMD_SIZE);
+
+        NFC_TRACE_ERROR2 ("last header: 0x%x 0x%x" , nfc_cb.recov_last_hdr[0], nfc_cb.recov_last_hdr[1]);
+
         //Store the old state.
         nfc_cb.old_nfc_state = nfc_cb.nfc_state;
         nfc_cb.nfc_state = NFC_STATE_RECOVERY;
+
         //Remove the pending cmds from the cmd queue. send any pending rsp/cback to jni
         nfc_ncif_empty_cmd_queue();
+
+        //Update the cmd window, since rsp has not came.
+        nfc_ncif_update_window ();
 
         /**
          * send core reset - keep config
