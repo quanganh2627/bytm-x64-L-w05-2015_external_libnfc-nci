@@ -1697,6 +1697,25 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
     tNFA_HCI_DYN_PIPE   *p_pipe = nfa_hciu_find_pipe_by_pid (pipe_id);
     tNFA_HCI_DYN_GATE   *p_gate;
 
+#ifdef NXP_EXT
+    /* On NXP chipset, connectivity pipes always receive the same id.
+     * If the pipe doesn't exist and if the pipe id is one of the ids which
+     * are normally reserved for connectivity then it's possible to fix
+     * the error by artificially creating the missing pipe.
+     */
+    if ((p_pipe == NULL) &&
+        ((pipe_id == NFC_HCI_DEFAULT_UICC_CONN_PIPE)  ||  (pipe_id == NFC_HCI_DEFAULT_ESE_CONN_PIPE)))
+    {
+       UINT8 host = (pipe_id == NFC_HCI_DEFAULT_UICC_CONN_PIPE) ? NFA_HCI_UICC_HOST : NFA_HCI_ESE_HOST;
+
+       NFA_TRACE_DEBUG1 ("nfa_hci_handle_dyn_pipe_pkt - Connectivity event received on pipe %02x which is closed.", pipe_id);
+       NFA_TRACE_DEBUG2 ("nfa_hci_handle_dyn_pipe_pkt - NXP WA: pipe %02x is going to be created (host %02x)", pipe_id, host);
+
+       tNFA_HCI_RESPONSE response = nfa_hciu_add_pipe_to_gate (pipe_id, NFA_HCI_CONNECTIVITY_GATE, host, NFA_HCI_CONNECTIVITY_GATE);
+       p_pipe = nfa_hciu_find_pipe_by_pid (pipe_id);
+    }
+#endif
+
     if (p_pipe == NULL)
     {
         /* Invalid pipe ID */
@@ -1721,10 +1740,15 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
 #ifdef NXP_EXT
     else if (p_pipe->local_gate == NFC_HCI_DEFAULT_DEST_GATE)
     {
-        /* Check if data packet is a command, response or event */
-        p_gate = nfa_hci_cb.cfg.dyn_gates;
-        p_gate->gate_owner = 0x0800;
+        p_gate = nfa_hciu_find_gate_by_gid (p_pipe->local_gate);
 
+        if(p_gate == NULL)
+        {
+           NFA_TRACE_ERROR1 ("nfa_hci_handle_dyn_pipe_pkt - Unknown gate %d", p_pipe->local_gate);
+           return;
+        }
+
+        /* Check if data packet is a command, response or event */
         switch (nfa_hci_cb.type)
         {
         case NFA_HCI_COMMAND_TYPE:
