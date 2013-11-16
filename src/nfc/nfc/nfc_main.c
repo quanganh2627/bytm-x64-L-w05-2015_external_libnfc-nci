@@ -322,7 +322,16 @@ void nfc_gen_cleanup (void)
     if (nfc_cb.flags & NFC_FL_DISCOVER_PENDING)
     {
         nfc_cb.flags &= ~NFC_FL_DISCOVER_PENDING;
+#ifdef NXP_EXT
+        if (nfc_cb.p_last_disc)
+        {
+            GKI_freebuf (nfc_cb.p_last_disc);
+            nfc_cb.p_last_disc = NULL;
+        }
+        nfc_cb.p_last_disc = nfc_cb.p_disc_pending;
+#else
         GKI_freebuf (nfc_cb.p_disc_pending);
+#endif
         nfc_cb.p_disc_pending = NULL;
     }
 
@@ -423,7 +432,16 @@ void nfc_main_handle_hal_evt (tNFC_HAL_EVT_MSG *p_msg)
             nfc_cb.flags &= ~NFC_FL_DISCOVER_PENDING;
             ps            = (UINT8 *)nfc_cb.p_disc_pending;
             nci_snd_discover_cmd (*ps, (tNFC_DISCOVER_PARAMS *)(ps + 1));
+#ifdef NXP_EXT
+            if (nfc_cb.p_last_disc)
+            {
+                GKI_freebuf( nfc_cb.p_last_disc);
+                nfc_cb.p_last_disc = NULL;
+            }
+            nfc_cb.p_last_disc = nfc_cb.p_disc_pending;
+#else
             GKI_freebuf (nfc_cb.p_disc_pending);
+#endif
             nfc_cb.p_disc_pending = NULL;
         }
         else
@@ -1147,7 +1165,16 @@ tNFC_STATUS NFC_Deactivate (tNFC_DEACT_TYPE deactivate_type)
     {
         /* the HAL pre-discover is still active - clear the pending flag */
         nfc_cb.flags &= ~NFC_FL_DISCOVER_PENDING;
+#ifdef NXP_EXT
+        if (nfc_cb.p_last_disc)
+        {
+            GKI_freebuf (nfc_cb.p_last_disc);
+            nfc_cb.p_last_disc = NULL;
+        }
+        nfc_cb.p_last_disc = nfc_cb.p_disc_pending;
+#else
         GKI_freebuf (nfc_cb.p_disc_pending);
+#endif
         nfc_cb.p_disc_pending = NULL;
         return NFC_STATUS_OK;
     }
