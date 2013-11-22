@@ -59,9 +59,6 @@ enum
     NFA_DM_API_REG_VSC_EVT,
     NFA_DM_API_SEND_VSC_EVT,
     NFA_DM_TIMEOUT_DISABLE_EVT,
-#ifdef NXP_EXT
-    NFA_DM_API_SEND_NXP_EVT,
-#endif
     NFA_DM_MAX_EVT
 };
 
@@ -571,9 +568,6 @@ BOOLEAN nfa_dm_ndef_dereg_hdlr (tNFA_DM_MSG *p_data);
 BOOLEAN nfa_dm_tout (tNFA_DM_MSG *p_data);
 BOOLEAN nfa_dm_act_reg_vsc (tNFA_DM_MSG *p_data);
 BOOLEAN nfa_dm_act_send_vsc (tNFA_DM_MSG *p_data);
-#ifdef NXP_EXT
-BOOLEAN nfa_dm_act_send_nxp(tNFA_DM_MSG *p_data);
-#endif
 BOOLEAN nfa_dm_act_disable_timeout (tNFA_DM_MSG *p_data);
 BOOLEAN nfa_dm_act_nfc_cback_data (tNFA_DM_MSG *p_data);
 

@@ -450,16 +450,6 @@ tNFA_STATUS nfa_ce_start_listening (void)
                     {
                         listen_mask |= NFA_DM_DISC_MASK_L_B_PRIME;
                     }
-#ifdef NXP_EXT
-                    if (p_cb->listen_info[listen_info_idx].tech_mask & NFA_TECHNOLOGY_MASK_A_ACTIVE)
-                    {
-                        listen_mask |= NFA_DM_DISC_MASK_LAA_NFC_DEP;
-                    }
-                    if (p_cb->listen_info[listen_info_idx].tech_mask & NFA_TECHNOLOGY_MASK_F_ACTIVE)
-                    {
-                        listen_mask |= NFA_DM_DISC_MASK_LFA_NFC_DEP;
-                    }
-#endif
                 }
 
                 if (listen_mask)
@@ -773,14 +763,6 @@ BOOLEAN nfa_ce_activate_ntf (tNFA_CE_MSG *p_ce_msg)
     /* Store activation parameters */
     memcpy (&p_cb->activation_params, p_activation_params, sizeof (tNFC_ACTIVATE_DEVT));
 
-#ifdef NXP_EXT
-    if (p_cb->activation_params.intf_param.type == NCI_INTERFACE_UICC_DIRECT || p_cb->activation_params.intf_param.type == NCI_INTERFACE_ESE_DIRECT )
-    {
-        memcpy (&(conn_evt.activated.activate_ntf), &p_cb->activation_params, sizeof (tNFC_ACTIVATE_DEVT));
-
-        (*p_cb->p_active_conn_cback) (NFA_ACTIVATED_EVT, &conn_evt);
-    }
-#endif
     /* Find the listen_info entry corresponding to this activation */
     if (p_cb->activation_params.protocol == NFA_PROTOCOL_T3T)
     {

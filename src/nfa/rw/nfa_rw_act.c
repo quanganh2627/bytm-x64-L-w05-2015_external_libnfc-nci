@@ -15,25 +15,8 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-/******************************************************************************
- *
- *  The original Work has been changed by NXP Semiconductors.
- *
- *  Copyright (C) 2013 NXP Semiconductors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ******************************************************************************/
+
+
 /******************************************************************************
  *
  *  This file contains the action functions the NFA_RW state machine.
@@ -485,30 +468,11 @@ void nfa_rw_handle_presence_check_rsp (tNFC_STATUS status)
 static void nfa_rw_handle_t1t_evt (tRW_EVENT event, tRW_DATA *p_rw_data)
 {
     tNFA_CONN_EVT_DATA conn_evt_data;
-#ifdef NXP_EXT
-    tNFA_TAG_PARAMS tag_params;
-    UINT8 *p_rid_rsp;
-#endif
+
     conn_evt_data.status = p_rw_data->data.status;
     switch (event)
     {
-#ifdef NXP_EXT
     case RW_T1T_RID_EVT:
-        if(p_rw_data->data.p_data != NULL)
-        {
-            /* Assume the data is just the response byte sequence */
-            p_rid_rsp = (UINT8 *) (p_rw_data->data.p_data + 1) + p_rw_data->data.p_data->offset;
-            /* Fetch HR from RID response message */
-            STREAM_TO_ARRAY (tag_params.t1t.hr,  p_rid_rsp, T1T_HR_LEN);
-            /* Fetch UID0-3 from RID response message */
-            STREAM_TO_ARRAY (tag_params.t1t.uid,  p_rid_rsp, T1T_CMD_UID_LEN);
-        }
-        /* Command complete - perform cleanup, notify the app */
-        nfa_rw_command_complete();
-
-        nfa_dm_notify_activation_status(NFA_STATUS_OK, &tag_params);
-        break;
-#endif
     case RW_T1T_RALL_CPLT_EVT:
     case RW_T1T_READ_CPLT_EVT:
     case RW_T1T_RSEG_CPLT_EVT:
@@ -910,19 +874,6 @@ static void nfa_rw_handle_t4t_evt (tRW_EVENT event, tRW_DATA *p_rw_data)
     case RW_T4T_NDEF_DETECT_EVT :           /* Result of NDEF detection procedure */
         nfa_rw_handle_ndef_detect(event, p_rw_data);
         break;
-
-#ifdef NXP_EXT
-    case RW_T4T_NDEF_FORMAT_CPLT_EVT:
-        /* Command complete - perform cleanup, notify the app */
-        nfa_rw_command_complete();
-        nfa_rw_cb.cur_op = NFA_RW_OP_MAX;
-        nfa_rw_cb.ndef_cur_size = p_rw_data->ndef.cur_size;
-        nfa_rw_cb.ndef_max_size = p_rw_data->ndef.max_size;
-        conn_evt_data.status = (p_rw_data->status == NFC_STATUS_OK) ? NFA_STATUS_OK : NFA_STATUS_FAILED;
-
-        nfa_dm_act_conn_cback_notify(NFA_FORMAT_CPLT_EVT, &conn_evt_data);
-        break;
-#endif
 
     case RW_T4T_NDEF_READ_EVT:              /* Segment of data received from type 4 tag */
         if (nfa_rw_cb.cur_op == NFA_RW_OP_READ_NDEF)
@@ -1848,12 +1799,7 @@ static void nfa_rw_format_tag (tNFA_RW_MSG *p_data)
     {
         status = RW_I93FormatNDef();
     }
-#ifdef NXP_EXT
-    else if (protocol == NFC_PROTOCOL_ISO_DEP)
-    {
-        status = RW_T4tFormatNDef();
-    }
-#endif
+
     /* If unable to format NDEF, notify the app */
     if (status != NFC_STATUS_OK)
         nfa_rw_error_cleanup (NFA_FORMAT_CPLT_EVT);
@@ -2487,16 +2433,10 @@ BOOLEAN nfa_rw_activate_ntf(tNFA_RW_MSG *p_data)
     {
     case NFC_PROTOCOL_T1T:
         /* Retrieve HR and UID fields from activation notification */
-#ifdef NXP_EXT
-        memcpy (tag_params.t1t.uid, p_activate_params->rf_tech_param.param.pa.nfcid1, p_activate_params->rf_tech_param.param.pa.nfcid1_len);
-        msg.op = NFA_RW_OP_T1T_RID;
-        nfa_rw_handle_op_req((tNFA_RW_MSG *)&msg);
-        activate_notify = FALSE;                    /* Delay notifying upper layer of NFA_ACTIVATED_EVT until HR0/HR1 is received */
-#else
         memcpy (tag_params.t1t.hr, p_activate_params->intf_param.intf_param.frame.param, NFA_T1T_HR_LEN);
         memcpy (tag_params.t1t.uid, p_activate_params->rf_tech_param.param.pa.nfcid1, p_activate_params->rf_tech_param.param.pa.nfcid1_len);
-#endif
         break;
+
     case NFC_PROTOCOL_T2T:
         /* Retrieve UID fields from activation notification */
         memcpy (tag_params.t2t.uid, p_activate_params->rf_tech_param.param.pa.nfcid1, p_activate_params->rf_tech_param.param.pa.nfcid1_len);

@@ -38,9 +38,6 @@ int GetNumValue(const char* name, void* p_value, unsigned long len);
 #define NAME_USE_RAW_NCI_TRACE          "USE_RAW_NCI_TRACE"
 #define NAME_LOG_TO_FILE                "LOG_TO_FILE"
 #define NAME_LOGCAT_FILTER              "LOGCAT_FILTER"
-#ifdef NXP_EXT
-#define NAME_APPL_DTA_MODE              "APPL_DTA_MODE"
-#endif
 #define NAME_LPTD_CFG                   "LPTD_CFG"
 #define NAME_SCREEN_OFF_POWER_STATE     "SCREEN_OFF_POWER_STATE"
 #define NAME_PREINIT_DSP_CFG            "PREINIT_DSP_CFG"

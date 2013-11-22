@@ -39,9 +39,6 @@ void nci_proc_core_ntf (BT_HDR *p_msg);
 void nci_proc_rf_management_ntf (BT_HDR *p_msg);
 void nci_proc_ee_management_ntf (BT_HDR *p_msg);
 void nci_proc_prop_rsp (BT_HDR *p_msg);
-#ifdef NXP_EXT
-void nci_proc_prop_nxp_rsp (BT_HDR *p_msg);
-#endif
 void nci_proc_prop_ntf (BT_HDR *p_msg);
 
 

@@ -15,25 +15,8 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-/******************************************************************************
- *
- *  The original Work has been changed by NXP Semiconductors.
- *
- *  Copyright (C) 2013 NXP Semiconductors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ******************************************************************************/
+
+
 /******************************************************************************
  *
  *  This file contains the action functions for device manager discovery
@@ -55,9 +38,7 @@
 /*
 **  static functions
 */
-#ifdef NXP_EXT
-extern unsigned char appl_dta_mode_flag;
-#endif
+
 static UINT8 nfa_dm_get_rf_discover_config (tNFA_DM_DISC_TECH_PROTO_MASK dm_disc_mask,
                                             tNFC_DISCOVER_PARAMS disc_params[],
                                             UINT8 max_params);
@@ -1034,9 +1015,6 @@ void nfa_dm_start_rf_discover (void)
                 {
                     /* NFCC can listen T3T based on NFCID routing */
                     listen_mask |= (nfa_dm_cb.disc_cb.entry[xx].requested_disc_mask  & NFA_DM_DISC_MASK_LF_T3T);
-#ifdef NXP_EXT
-                    listen_mask |= (nfa_dm_cb.disc_cb.entry[xx].requested_disc_mask  & NFA_DM_DISC_MASK_LF_NFC_DEP);
-#endif
                 }
 
                 /* NFC-B Prime */
@@ -1224,37 +1202,6 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
         return (NFA_STATUS_FAILED);
     }
 
-#ifdef NXP_EXT
-    /*
-     * if this is Proprietary RF interface, notify activation as START_READER_EVT.
-     *
-     * Code to handle the Reader over SWP.
-     * 1. Pass this info to JNI as START_READER_EVT.
-     * return (NFA_STATUS_OK)
-     */
-    if (p_data->activate.intf_param.type  == NCI_INTERFACE_UICC_DIRECT || p_data->activate.intf_param.type == NCI_INTERFACE_ESE_DIRECT)
-    {
-        for (xx = 0; xx < NFA_DM_DISC_NUM_ENTRIES; xx++)
-        {
-            if (  (nfa_dm_cb.disc_cb.entry[xx].in_use)
-                &&(nfa_dm_cb.disc_cb.entry[xx].host_id != NFA_DM_DISC_HOST_ID_DH))
-            {
-                nfa_dm_cb.disc_cb.activated_rf_interface = p_data->activate.intf_param.type;
-                nfa_dm_cb.disc_cb.activated_handle       = xx;
-
-                NFA_TRACE_DEBUG2 ("activated_rf_uicc-ese_interface:0x%x, activated_handle: 0x%x",
-                                   nfa_dm_cb.disc_cb.activated_rf_interface,
-                                   nfa_dm_cb.disc_cb.activated_handle);
-
-                if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
-                    (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_ACTIVATED_EVT, p_data);
-
-                return (NFA_STATUS_OK);
-            }
-        }
-        return (NFA_STATUS_FAILED);
-    }
-#endif
     /* get bit mask of technolgies/mode and protocol */
     activated_disc_mask = nfa_dm_disc_get_disc_mask (tech_n_mode, protocol);
 
@@ -1294,19 +1241,7 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
             if (nfa_dm_cb.disc_cb.entry[xx].host_id == host_id_in_LRT)
             {
                 if (nfa_dm_cb.disc_cb.entry[xx].selected_disc_mask & activated_disc_mask)
-                {
                     break;
-                }
-#ifdef NXP_EXT
-                else
-                {
-                    if (appl_dta_mode_flag == 1)
-                    {
-                       NFA_TRACE_DEBUG0("DTA Mode Enabled");
-                       break;
-                    }
-                }
-#endif
             }
             else
             {
@@ -1343,20 +1278,7 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
         xx = iso_dep_t3t__listen;
     }
 
-#ifdef NXP_EXT
-    if (protocol == NFC_PROTOCOL_NFC_DEP &&
-            (tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_F_ACTIVE ||
-                    tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE ||
-                    tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A
-                    ))
-    {
-        xx = 1;
-    }
-
-    if (xx < NFA_DM_DISC_NUM_ENTRIES || protocol == NFC_PROTOCOL_NFC_DEP)
-#else
     if (xx < NFA_DM_DISC_NUM_ENTRIES)
-#endif
     {
         nfa_dm_cb.disc_cb.activated_tech_mode    = tech_n_mode;
         nfa_dm_cb.disc_cb.activated_rf_disc_id   = p_data->activate.rf_disc_id;
@@ -1368,25 +1290,10 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
                            nfa_dm_cb.disc_cb.activated_protocol,
                            nfa_dm_cb.disc_cb.activated_handle);
 
-#ifdef NXP_EXT
-        if (xx < NFA_DM_DISC_NUM_ENTRIES)
-        {
-            if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
-                (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_ACTIVATED_EVT, p_data);
-
-            return (NFA_STATUS_OK);
-        }
-        else
-        {
-            NFA_TRACE_ERROR0 ("nfa_dm_disc_notify_activation():  index error");
-            return (NFA_STATUS_FAILED);
-        }
-#else
         if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
             (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_ACTIVATED_EVT, p_data);
 
         return (NFA_STATUS_OK);
-#endif
     }
     else
     {
@@ -1475,19 +1382,11 @@ static void nfa_dm_disc_notify_deactivation (tNFA_DM_RF_DISC_SM_EVENT sm_event,
         {
             xx = nfa_dm_cb.disc_cb.activated_handle;
 
-#ifdef NXP_EXT
-            if (xx < NFA_DM_DISC_NUM_ENTRIES)
-            {
-                if ( nfa_dm_cb.disc_cb.entry[xx].in_use && nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
-                    (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_DEACTIVATED_EVT, p_data);
-            }
-#else
             if ((xx < NFA_DM_DISC_NUM_ENTRIES) && (nfa_dm_cb.disc_cb.entry[xx].in_use))
             {
-                if ( nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
+                if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
                     (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_DEACTIVATED_EVT, p_data);
             }
-#endif
         }
     }
 
@@ -1810,21 +1709,7 @@ static void nfa_dm_disc_sm_discovery (tNFA_DM_RF_DISC_SM_EVENT event,
         }
         break;
     case NFA_DM_RF_DISCOVER_NTF:
-#ifdef NXP_EXT
-        /* Notification Type = NCI_DISCOVER_NTF_LAST_ABORT */
-        if (p_data->nfc_discover.result.more == NCI_DISCOVER_NTF_LAST_ABORT)
-        {
-            /* Fix for multiple tags: After receiving deactivate event, restart discovery */
-            NFA_TRACE_DEBUG0 ("Received NCI_DISCOVER_NTF_LAST_ABORT, sending deactivate command");
-            NFC_Deactivate (NFA_DEACTIVATE_TYPE_IDLE);
-        }
-        else
-        {
-            nfa_dm_disc_new_state (NFA_DM_RFST_W4_ALL_DISCOVERIES);
-        }
-#else
         nfa_dm_disc_new_state (NFA_DM_RFST_W4_ALL_DISCOVERIES);
-#endif
         nfa_dm_notify_discovery (p_data);
         break;
     case NFA_DM_RF_INTF_ACTIVATED_NTF:
@@ -1840,18 +1725,6 @@ static void nfa_dm_disc_sm_discovery (tNFA_DM_RF_DISC_SM_EVENT event,
             {
                 nfa_dm_disc_new_state (NFA_DM_RFST_LISTEN_ACTIVE);
             }
-#ifdef NXP_EXT
-            /*
-             * Handle the Reader over SWP.
-             * Add condition UICC_DIRECT_INTF/ESE_DIRECT_INTF
-             * set new state NFA_DM_RFST_POLL_ACTIVE
-             * */
-            else if (p_data->nfc_discover.activate.intf_param.type == NCI_INTERFACE_UICC_DIRECT ||
-                    p_data->nfc_discover.activate.intf_param.type == NCI_INTERFACE_ESE_DIRECT )
-            {
-                nfa_dm_disc_new_state (NFA_DM_RFST_POLL_ACTIVE);
-            }
-#endif
             else if (p_data->nfc_discover.activate.rf_tech_param.mode & 0x80)
             {
                 /* Listen mode */
@@ -2067,10 +1940,6 @@ static void nfa_dm_disc_sm_w4_host_select (tNFA_DM_RF_DISC_SM_EVENT event,
         break;
     default:
         NFA_TRACE_ERROR0 ("nfa_dm_disc_sm_w4_host_select (): Unexpected discovery event");
-#ifdef NXP_EXT
-        NFA_TRACE_ERROR0 ("nfa_dm_disc_sm_w4_host_select (): Restarted discovery");
-        NFC_Deactivate (NFA_DEACTIVATE_TYPE_IDLE);
-#endif
         break;
     }
 
@@ -2103,15 +1972,6 @@ static void nfa_dm_disc_sm_poll_active (tNFA_DM_RF_DISC_SM_EVENT event,
     switch (event)
     {
     case NFA_DM_RF_DEACTIVATE_CMD:
-#ifdef NXP_EXT
-        if (nfa_dm_cb.disc_cb.activated_protocol == NCI_PROTOCOL_MIFARE)
-        {
-            nfa_dm_cb.presence_check_deact_pending = TRUE;
-            nfa_dm_cb.presence_check_deact_type    = p_data->deactivate_type;
-            status = nfa_dm_send_deactivate_cmd(p_data->deactivate_type);
-            break;
-        }
-#endif
         if (old_pres_check_flag)
         {
             /* presence check is already enabled when deactivate cmd is requested,

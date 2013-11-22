@@ -438,18 +438,17 @@ static void nfa_hci_api_get_gate_pipe_list (tNFA_HCI_EVENT_DATA *p_evt_data)
         }
     }
 
+    evt_data.gates_pipes.num_uicc_created_pipes = 0;
     /* Loop through all pipes that are connected to connectivity gate */
-    for (xx = 0, pp = nfa_hci_cb.cfg.dyn_pipes, evt_data.gates_pipes.num_uicc_created_pipes = 0;
-            xx < NFA_HCI_MAX_PIPE_CB, evt_data.gates_pipes.num_uicc_created_pipes < NFA_HCI_MAX_HOST_IN_NETWORK;
-            xx++, pp++, evt_data.gates_pipes.num_uicc_created_pipes++)
+    for (xx = 0, pp = nfa_hci_cb.cfg.dyn_pipes; xx < NFA_HCI_MAX_PIPE_CB; xx++, pp++)
     {
         if (pp->pipe_id != 0  && pp->local_gate == NFA_HCI_CONNECTIVITY_GATE)
         {
-            memcpy (&evt_data.gates_pipes.uicc_created_pipe [evt_data.gates_pipes.num_uicc_created_pipes], pp, sizeof (tNFA_HCI_PIPE_INFO));
+            memcpy (&evt_data.gates_pipes.uicc_created_pipe [evt_data.gates_pipes.num_uicc_created_pipes++], pp, sizeof (tNFA_HCI_PIPE_INFO));
         }
         else if (pp->pipe_id != 0  && pp->local_gate == NFA_HCI_LOOP_BACK_GATE)
         {
-            memcpy (&evt_data.gates_pipes.uicc_created_pipe [evt_data.gates_pipes.num_uicc_created_pipes], pp, sizeof (tNFA_HCI_PIPE_INFO));
+            memcpy (&evt_data.gates_pipes.uicc_created_pipe [evt_data.gates_pipes.num_uicc_created_pipes++], pp, sizeof (tNFA_HCI_PIPE_INFO));
         }
     }
 
@@ -1245,11 +1244,7 @@ void nfa_hci_handle_admin_gate_cmd (UINT8 *p_data)
         STREAM_TO_UINT8 (pipe,        p_data);
 
         if (  (dest_gate == NFA_HCI_IDENTITY_MANAGEMENT_GATE)
-            ||(dest_gate == NFA_HCI_LOOP_BACK_GATE)
-#ifdef NXP_EXT
-            ||(dest_gate == NFC_HCI_DEFAULT_DEST_GATE)
-#endif
-           )
+            ||(dest_gate == NFA_HCI_LOOP_BACK_GATE) )
         {
             response = nfa_hciu_add_pipe_to_static_gate (dest_gate, pipe, source_host, source_gate);
         }
@@ -1697,25 +1692,6 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
     tNFA_HCI_DYN_PIPE   *p_pipe = nfa_hciu_find_pipe_by_pid (pipe_id);
     tNFA_HCI_DYN_GATE   *p_gate;
 
-#ifdef NXP_EXT
-    /* On NXP chipset, connectivity pipes always receive the same id.
-     * If the pipe doesn't exist and if the pipe id is one of the ids which
-     * are normally reserved for connectivity then it's possible to fix
-     * the error by artificially creating the missing pipe.
-     */
-    if ((p_pipe == NULL) &&
-        ((pipe_id == NFC_HCI_DEFAULT_UICC_CONN_PIPE)  ||  (pipe_id == NFC_HCI_DEFAULT_ESE_CONN_PIPE)))
-    {
-       UINT8 host = (pipe_id == NFC_HCI_DEFAULT_UICC_CONN_PIPE) ? NFA_HCI_UICC_HOST : NFA_HCI_ESE_HOST;
-
-       NFA_TRACE_DEBUG1 ("nfa_hci_handle_dyn_pipe_pkt - Connectivity event received on pipe %02x which is closed.", pipe_id);
-       NFA_TRACE_DEBUG2 ("nfa_hci_handle_dyn_pipe_pkt - NXP WA: pipe %02x is going to be created (host %02x)", pipe_id, host);
-
-       tNFA_HCI_RESPONSE response = nfa_hciu_add_pipe_to_gate (pipe_id, NFA_HCI_CONNECTIVITY_GATE, host, NFA_HCI_CONNECTIVITY_GATE);
-       p_pipe = nfa_hciu_find_pipe_by_pid (pipe_id);
-    }
-#endif
-
     if (p_pipe == NULL)
     {
         /* Invalid pipe ID */
@@ -1737,34 +1713,6 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
     {
         nfa_hci_handle_connectivity_gate_pkt (p_data, data_len, p_pipe);
     }
-#ifdef NXP_EXT
-    else if (p_pipe->local_gate == NFC_HCI_DEFAULT_DEST_GATE)
-    {
-        p_gate = nfa_hciu_find_gate_by_gid (p_pipe->local_gate);
-
-        if(p_gate == NULL)
-        {
-           NFA_TRACE_ERROR1 ("nfa_hci_handle_dyn_pipe_pkt - Unknown gate %d", p_pipe->local_gate);
-           return;
-        }
-
-        /* Check if data packet is a command, response or event */
-        switch (nfa_hci_cb.type)
-        {
-        case NFA_HCI_COMMAND_TYPE:
-            nfa_hci_handle_generic_gate_cmd (p_data, (UINT8) data_len, p_gate, p_pipe);
-            break;
-
-        case NFA_HCI_RESPONSE_TYPE:
-            nfa_hci_handle_generic_gate_rsp (p_data, (UINT8) data_len, p_gate, p_pipe);
-            break;
-
-        case NFA_HCI_EVENT_TYPE:
-            nfa_hci_handle_generic_gate_evt (p_data, data_len, p_gate, p_pipe);
-            break;
-        }
-    }
-#endif
     else
     {
         p_gate = nfa_hciu_find_gate_by_gid (p_pipe->local_gate);

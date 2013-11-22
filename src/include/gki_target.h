@@ -17,6 +17,7 @@
  ******************************************************************************/
 #ifndef GKI_TARGET_H
 #define GKI_TARGET_H
+
 #ifdef BUILDCFG
 #include "buildcfg.h"
 #endif
@@ -194,11 +195,7 @@
 
 /* The size of the buffers in pool 3. */
 #ifndef GKI_BUF3_SIZE
-#ifdef NXP_EXT
-#define GKI_BUF3_SIZE               (32*1024)
-#else
 #define GKI_BUF3_SIZE               2500
-#endif
 #endif
 
 /* The number of buffers in buffer pool 3. */

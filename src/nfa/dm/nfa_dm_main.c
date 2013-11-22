@@ -75,10 +75,7 @@ const tNFA_DM_ACTION nfa_dm_action[] =
     nfa_dm_ndef_dereg_hdlr,             /* NFA_DM_API_DEREG_NDEF_HDLR_EVT       */
     nfa_dm_act_reg_vsc,                 /* NFA_DM_API_REG_VSC_EVT               */
     nfa_dm_act_send_vsc,                /* NFA_DM_API_SEND_VSC_EVT              */
-    nfa_dm_act_disable_timeout,          /* NFA_DM_TIMEOUT_DISABLE_EVT           */
-#ifdef NXP_EXT
-    nfa_dm_act_send_nxp                  /* NFA_DM_API_SEND_NXP_EVT              */
-#endif
+    nfa_dm_act_disable_timeout          /* NFA_DM_TIMEOUT_DISABLE_EVT           */
 };
 
 /*****************************************************************************
@@ -223,8 +220,7 @@ BOOLEAN nfa_dm_is_active (void)
 *******************************************************************************/
 tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOLEAN app_init)
 {
-    UINT8 type, len, *p_value, max_len = 0;
-    UINT8 *p_stored = NULL;
+    UINT8 type, len, *p_value, *p_stored, max_len;
     UINT8 xx = 0, updated_len = 0, *p_cur_len;
     BOOLEAN update;
     tNFC_STATUS nfc_status;
@@ -287,22 +283,9 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
         **  Listen B Configuration
         */
         case NFC_PMID_LB_SENSB_INFO:
-#ifdef NXP_EXT
-            if(app_init == TRUE)
-            {
-                p_stored  = nfa_dm_cb.params.lb_sensb_info;
-                max_len   = NCI_PARAM_LEN_LB_SENSB_INFO;
-                p_cur_len = &nfa_dm_cb.params.lb_sensb_info_len;
-            }
-            else
-            {
-                update = FALSE;
-            }
-#else
             p_stored  = nfa_dm_cb.params.lb_sensb_info;
             max_len   = NCI_PARAM_LEN_LB_SENSB_INFO;
             p_cur_len = &nfa_dm_cb.params.lb_sensb_info_len;
-#endif
             break;
         case NFC_PMID_LB_NFCID0:
             p_stored  = nfa_dm_cb.params.lb_nfcid0;
@@ -346,12 +329,10 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
         /*
         **  ISO-DEP and NFC-DEP Configuration
         */
-#ifndef NXP_EXT
         case NFC_PMID_FWI:
             p_stored = nfa_dm_cb.params.fwi;
             max_len  = NCI_PARAM_LEN_FWI;
             break;
-#endif
         case NFC_PMID_WT:
             p_stored = nfa_dm_cb.params.wt;
             max_len  = NCI_PARAM_LEN_WT;
