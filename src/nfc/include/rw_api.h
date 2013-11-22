@@ -102,6 +102,9 @@ enum
     RW_T4T_PRESENCE_CHECK_EVT,                  /* Response to RW_T4tPresenceCheck          */
     RW_T4T_RAW_FRAME_EVT,                       /* Response of raw frame sent               */
     RW_T4T_INTF_ERROR_EVT,                      /* RF Interface error event                 */
+#ifdef NXP_EXT
+    RW_T4T_NDEF_FORMAT_CPLT_EVT,                /* Format operation completed               */
+#endif
     RW_T4T_MAX_EVT,
 
     /* ISO 15693 tag events for tRW_CBACK */
@@ -368,7 +371,7 @@ NFC_API extern tNFC_STATUS RW_T1tLocateTlv (UINT8 tlv_type);
 
 /*******************************************************************************
 **
-** Function         RW_T2tDetectNDef
+** Function         RW_T1tDetectNDef
 **
 ** Description      This function can be called to detect if there is an NDEF
 **                  message on the tag.
@@ -523,7 +526,7 @@ NFC_API extern tNFC_STATUS RW_T2tSectorSelect (UINT8 sector);
 ** Returns          tNFC_STATUS
 **
 *******************************************************************************/
-NFC_API extern tNFC_STATUS RW_T2tDetectNDef (void);
+NFC_API extern tNFC_STATUS RW_T2tDetectNDef (BOOLEAN skip_dyn_locks);
 
 /*******************************************************************************
 **

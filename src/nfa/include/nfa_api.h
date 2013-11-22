@@ -124,6 +124,9 @@ typedef UINT8 tNFA_TECHNOLOGY_MASK;
 #define NFA_PROTOCOL_ISO15693   NFC_PROTOCOL_15693
 #define NFA_PROTOCOL_B_PRIME    NFC_PROTOCOL_B_PRIME
 #define NFA_PROTOCOL_KOVIO      NFC_PROTOCOL_KOVIO
+#ifdef NXP_EXT
+#define NFA_PROTOCOL_MIFARE     NFC_PROTOCOL_MIFARE
+#endif
 #define NFA_PROTOCOL_INVALID    0xFF
 #define NFA_MAX_NUM_PROTOCOLS   8
 typedef UINT8 tNFA_NFC_PROTOCOL;
@@ -256,6 +259,10 @@ typedef void (tNFA_DM_CBACK) (UINT8 event, tNFA_DM_CBACK_DATA *p_data);
 #define NFA_SET_P2P_LISTEN_TECH_EVT             33  /* status of setting P2P listen technologies    */
 #define NFA_RW_INTF_ERROR_EVT                   34  /* RF Interface error event                     */
 #define NFA_LLCP_FIRST_PACKET_RECEIVED_EVT      35  /* First packet received over LLCP link         */
+#define NFA_LISTEN_ENABLED_EVT                  36  /* Listening enabled event                      */
+#define NFA_LISTEN_DISABLED_EVT                 37  /* Listening disabled event                     */
+#define NFA_P2P_PAUSED_EVT                      38  /* P2P services paused event                    */
+#define NFA_P2P_RESUMED_EVT                     39  /* P2P services resumed event                   */
 
 /* NFC deactivation type */
 #define NFA_DEACTIVATE_TYPE_IDLE        NFC_DEACTIVATE_TYPE_IDLE
@@ -483,6 +490,19 @@ typedef void (tNFA_CONN_CBACK) (UINT8 event, tNFA_CONN_EVT_DATA *p_data);
 #define NFA_DM_NUM_INTERFACE_MAP    3
 #endif
 
+/* compile-time configuration structure for the RF Discovery Frequency for each technology */
+typedef struct
+{
+    UINT8   pa;     /* Frequency for NFC Technology A               */
+    UINT8   pb;     /* Frequency for NFC Technology B               */
+    UINT8   pf;     /* Frequency for NFC Technology F               */
+    UINT8   pi93;   /* Frequency for Proprietary Technology/15693   */
+    UINT8   pbp;    /* Frequency for Proprietary Technology/B-Prime */
+    UINT8   pk;     /* Frequency for Proprietary Technology/Kovio   */
+    UINT8   paa;    /* Frequency for NFC Technology A active mode   */
+    UINT8   pfa;    /* Frequency for NFC Technology F active mode   */
+} tNFA_DM_DISC_FREQ_CFG;
+
 /* compile-time configuration structure */
 typedef struct
 {
@@ -567,6 +587,9 @@ typedef tNFC_RF_COMM_PARAMS tNFA_RF_COMM_PARAMS;
 #define NFA_INTERFACE_FRAME         NFC_INTERFACE_FRAME
 #define NFA_INTERFACE_ISO_DEP       NFC_INTERFACE_ISO_DEP
 #define NFA_INTERFACE_NFC_DEP       NFC_INTERFACE_NFC_DEP
+#ifdef NXP_EXT
+#define NFA_INTERFACE_MIFARE        NFC_INTERFACE_MIFARE
+#endif
 typedef tNFC_INTF_TYPE tNFA_INTF_TYPE;
 
 /*******************************************************************************
@@ -840,6 +863,84 @@ NFC_API extern tNFA_STATUS NFA_EnablePolling (tNFA_TECHNOLOGY_MASK poll_mask);
 **
 *******************************************************************************/
 NFC_API extern tNFA_STATUS NFA_DisablePolling (void);
+
+/*******************************************************************************
+**
+** Function         NFA_EnableListening
+**
+** Description      Enable listening.
+**                  NFA_LISTEN_ENABLED_EVT will be returned after listening is allowed.
+**
+**                  The actual listening technologies are specified by other NFA
+**                  API functions. Such functions include (but not limited to)
+**                  NFA_CeConfigureUiccListenTech.
+**                  If NFA_DisableListening () is called to ignore the listening technologies,
+**                  NFA_EnableListening () is called to restore the listening technologies
+**                  set by these functions.
+**
+** Note:            If RF discovery is started, NFA_StopRfDiscovery()/NFA_RF_DISCOVERY_STOPPED_EVT
+**                  should happen before calling this function
+**
+** Returns          NFA_STATUS_OK if successfully initiated
+**                  NFA_STATUS_FAILED otherwise
+**
+*******************************************************************************/
+NFC_API extern tNFA_STATUS NFA_EnableListening (void);
+
+/*******************************************************************************
+**
+** Function         NFA_DisableListening
+**
+** Description      Disable listening
+**                  NFA_LISTEN_DISABLED_EVT will be returned after stopping listening.
+**                  This function is called to exclude listen at RF discovery.
+**
+** Note:            If RF discovery is started, NFA_StopRfDiscovery()/NFA_RF_DISCOVERY_STOPPED_EVT
+**                  should happen before calling this function
+**
+** Returns          NFA_STATUS_OK if successfully initiated
+**                  NFA_STATUS_FAILED otherwise
+**
+*******************************************************************************/
+NFC_API extern tNFA_STATUS NFA_DisableListening (void);
+
+/*******************************************************************************
+**
+** Function         NFA_PauseP2p
+**
+** Description      Pause P2P services.
+**                  NFA_P2P_PAUSED_EVT will be returned after P2P services are
+**                  disabled.
+**
+**                  The P2P services enabled by NFA_P2p* API functions are not
+**                  available. NFA_ResumeP2p() is called to resume the P2P
+**                  services.
+**
+** Note:            If RF discovery is started, NFA_StopRfDiscovery()/NFA_RF_DISCOVERY_STOPPED_EVT
+**                  should happen before calling this function
+**
+** Returns          NFA_STATUS_OK if successfully initiated
+**                  NFA_STATUS_FAILED otherwise
+**
+*******************************************************************************/
+NFC_API extern tNFA_STATUS NFA_PauseP2p (void);
+
+/*******************************************************************************
+**
+** Function         NFA_ResumeP2p
+**
+** Description      Resume P2P services.
+**                  NFA_P2P_RESUMED_EVT will be returned after P2P services are.
+**                  enables again.
+**
+** Note:            If RF discovery is started, NFA_StopRfDiscovery()/NFA_RF_DISCOVERY_STOPPED_EVT
+**                  should happen before calling this function
+**
+** Returns          NFA_STATUS_OK if successfully initiated
+**                  NFA_STATUS_FAILED otherwise
+**
+*******************************************************************************/
+NFC_API extern tNFA_STATUS NFA_ResumeP2p (void);
 
 /*******************************************************************************
 **

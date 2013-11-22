@@ -58,7 +58,11 @@
 
 /* 0xE0 ~0xFF are proprietary status codes */
 #define NFC_STATUS_CMD_STARTED          0xE3/* Command started successfully                     */
+#ifdef NXP_EXT
+#define NFC_STATUS_HW_TIMEOUT           0xEC
+#else
 #define NFC_STATUS_HW_TIMEOUT           0xE4/* NFCC Timeout in responding to an NCI command     */
+#endif
 #define NFC_STATUS_CONTINUE             0xE5/* More (same) event to follow                      */
 #define NFC_STATUS_REFUSED              0xE6/* API is called to perform illegal function        */
 #define NFC_STATUS_BAD_RESP             0xE7/* Wrong format of R-APDU, CC file or NDEF file     */
@@ -193,7 +197,8 @@ enum
     NFC_CONN_CLOSE_CEVT,                    /* 1  Conn Close Response           */
     NFC_DEACTIVATE_CEVT,                    /* 2  Deactivate response/notificatn*/
     NFC_DATA_CEVT,                          /* 3  Data                          */
-    NFC_ERROR_CEVT                          /* 4  generic or interface error    */
+    NFC_ERROR_CEVT,                         /* 4  generic or interface error    */
+    NFC_DATA_START_CEVT                     /* 5  received the first fragment on RF link */
 };
 typedef UINT16 tNFC_CONN_EVT;
 
@@ -341,6 +346,9 @@ typedef UINT8 tNFC_RF_TECH;
 #define NFC_PROTOCOL_T3T        NCI_PROTOCOL_T3T      /* Type3Tag    - NFC-F            */
 #define NFC_PROTOCOL_ISO_DEP    NCI_PROTOCOL_ISO_DEP  /* Type 4A,4B  - NFC-A or NFC-B   */
 #define NFC_PROTOCOL_NFC_DEP    NCI_PROTOCOL_NFC_DEP  /* NFCDEP/LLCP - NFC-A or NFC-F       */
+#ifdef NXP_EXT
+#define NFC_PROTOCOL_MIFARE     NCI_PROTOCOL_MIFARE
+#endif
 #define NFC_PROTOCOL_B_PRIME    NCI_PROTOCOL_B_PRIME
 #define NFC_PROTOCOL_15693      NCI_PROTOCOL_15693
 #define NFC_PROTOCOL_KOVIO      NCI_PROTOCOL_KOVIO
@@ -390,6 +398,9 @@ typedef UINT8 tNFC_BIT_RATE;
 #define NFC_INTERFACE_LLCP_LOW      NCI_INTERFACE_LLCP_LOW
 #define NFC_INTERFACE_LLCP_HIGH     NCI_INTERFACE_LLCP_HIGH
 #define NFC_INTERFACE_VS_T2T_CE     NCI_INTERFACE_VS_T2T_CE
+#ifdef NXP_EXT
+#define NFC_INTERFACE_MIFARE        NCI_INTERFACE_MIFARE
+#endif
 typedef tNCI_INTF_TYPE tNFC_INTF_TYPE;
 
 /**********************************************
