@@ -47,13 +47,9 @@ char bcm_nfc_location[120];
 static UINT8 nfa_dm_cfg[sizeof ( tNFA_DM_CFG ) ];
 extern tNFA_DM_CFG *p_nfa_dm_cfg;
 extern UINT8 nfa_ee_max_ee_cfg;
-#ifdef NXP_EXT
-extern const UINT8  nfca_version_string [] = "NFCDROID_MI_422.10.0.15";
-extern const UINT8  nfa_version_string [] =  "NFA_MI_1.03.62+";
-#else
 extern const UINT8  nfca_version_string [];
 extern const UINT8  nfa_version_string [];
-#endif
+
 /*******************************************************************************
 **
 ** Function:    NfcAdaptation::NfcAdaptation()
