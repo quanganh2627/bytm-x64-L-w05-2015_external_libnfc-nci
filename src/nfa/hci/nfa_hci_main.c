@@ -739,7 +739,11 @@ static void nfa_hci_conn_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p
         }
         else
         {
-            if ((pipe >= NFA_HCI_FIRST_DYNAMIC_PIPE) && (nfa_hci_cb.type == NFA_HCI_EVENT_TYPE))
+            if ((pipe >= NFA_HCI_FIRST_DYNAMIC_PIPE) && (nfa_hci_cb.type == NFA_HCI_EVENT_TYPE)
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                 && (nfa_hci_cb.inst != NFA_HCI_EVT_WTX)
+#endif
+               )
             {
                 nfa_hci_set_receive_buf (pipe);
                 nfa_hci_assemble_msg (p, pkt_len);
@@ -790,7 +794,11 @@ static void nfa_hci_conn_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p
     /* If we got a response, cancel the response timer. Also, if waiting for */
     /* a single response, we can go back to idle state                       */
     if (  (nfa_hci_cb.hci_state == NFA_HCI_STATE_WAIT_RSP)
-        &&((nfa_hci_cb.type == NFA_HCI_RESPONSE_TYPE) || (nfa_hci_cb.w4_rsp_evt && (nfa_hci_cb.type == NFA_HCI_EVENT_TYPE)))  )
+        &&((nfa_hci_cb.type == NFA_HCI_RESPONSE_TYPE) || (nfa_hci_cb.w4_rsp_evt && (nfa_hci_cb.type == NFA_HCI_EVENT_TYPE)
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        && (nfa_hci_cb.inst != NFA_HCI_EVT_WTX)
+#endif
+        )))
     {
         nfa_sys_stop_timer (&nfa_hci_cb.timer);
         nfa_hci_cb.hci_state  = NFA_HCI_STATE_IDLE;
@@ -826,7 +834,11 @@ static void nfa_hci_conn_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p
         break;
     }
 
-    if ((nfa_hci_cb.type == NFA_HCI_RESPONSE_TYPE) || (nfa_hci_cb.w4_rsp_evt && (nfa_hci_cb.type == NFA_HCI_EVENT_TYPE)))
+    if ((nfa_hci_cb.type == NFA_HCI_RESPONSE_TYPE) || (nfa_hci_cb.w4_rsp_evt && (nfa_hci_cb.type == NFA_HCI_EVENT_TYPE)
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+         && (nfa_hci_cb.inst != NFA_HCI_EVT_WTX)
+#endif
+       ))
     {
         nfa_hci_cb.w4_rsp_evt = FALSE;
     }

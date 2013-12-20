@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 /******************************************************************************
  *
@@ -124,7 +142,7 @@ typedef UINT8 tNFA_TECHNOLOGY_MASK;
 #define NFA_PROTOCOL_ISO15693   NFC_PROTOCOL_15693
 #define NFA_PROTOCOL_B_PRIME    NFC_PROTOCOL_B_PRIME
 #define NFA_PROTOCOL_KOVIO      NFC_PROTOCOL_KOVIO
-#ifdef NXP_EXT
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NFA_PROTOCOL_MIFARE     NFC_PROTOCOL_MIFARE
 #endif
 #define NFA_PROTOCOL_INVALID    0xFF
@@ -149,6 +167,14 @@ typedef UINT8 tNFA_PROTOCOL_MASK;
 #define NFA_DM_RF_FIELD_EVT	            5   /* Status of RF Field               */
 #define NFA_DM_NFCC_TIMEOUT_EVT         6   /* NFCC is not responding           */
 #define NFA_DM_NFCC_TRANSPORT_ERR_EVT   7   /* NCI Tranport error               */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NFA_DM_EMVCO_PCD_COLLISION_EVT  8   /* Collision event in case of EMV-CO Profile (Nxp)*/
+
+/* Reader over SWP Events*/
+#define NFA_RD_SWP_READER_REQUESTED     0
+#define NFA_RD_SWP_READER_START         1
+#define NFA_RD_SWP_READER_STOP          2
+#endif
 
 #define NFA_DM_MAX_UICC                 2   /* Max number of UICC               */
 
@@ -587,7 +613,7 @@ typedef tNFC_RF_COMM_PARAMS tNFA_RF_COMM_PARAMS;
 #define NFA_INTERFACE_FRAME         NFC_INTERFACE_FRAME
 #define NFA_INTERFACE_ISO_DEP       NFC_INTERFACE_ISO_DEP
 #define NFA_INTERFACE_NFC_DEP       NFC_INTERFACE_NFC_DEP
-#ifdef NXP_EXT
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NFA_INTERFACE_MIFARE        NFC_INTERFACE_MIFARE
 #endif
 typedef tNFC_INTF_TYPE tNFA_INTF_TYPE;
@@ -1225,6 +1251,29 @@ NFC_API extern tNFA_STATUS NFA_SendVsCommand (UINT8            oid,
                                               UINT8            cmd_params_len,
                                               UINT8            *p_cmd_params,
                                               tNFA_VSC_CBACK   *p_cback);
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+/*******************************************************************************
+**
+** Function         NFA_SendNxpNciCommand
+**
+** Description      This function is called to send NXP NCI Vendor Specific
+**                  command to NFCC.
+**
+**                  cmd_params_len  - The command parameter len
+**                  p_cmd_params    - The command parameter
+**                  p_cback         - The callback function to receive the command
+**
+** Returns          NFA_STATUS_OK if successfully initiated
+**                  NFA_STATUS_FAILED otherwise
+**
+*******************************************************************************/
+
+NFC_API extern tNFA_STATUS NFA_SendNxpNciCommand (UINT8            cmd_params_len,
+                                                  UINT8            *p_cmd_params,
+                                                  tNFA_VSC_CBACK   *p_cback);
+
+#endif
 
 /*******************************************************************************
 **

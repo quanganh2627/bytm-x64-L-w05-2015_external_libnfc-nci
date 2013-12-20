@@ -15,6 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 #include "OverrideLog.h"
 #include "NfcAdaptation.h"
 extern "C"
@@ -42,6 +61,9 @@ ThreadCondVar NfcAdaptation::mHalCloseCompletedEvent;
 
 UINT32 ScrProtocolTraceFlag = SCR_PROTO_TRACE_ALL; //0x017F00;
 UINT8 appl_trace_level = 0xff;
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+UINT8 appl_dta_mode_flag = 0x00;
+#endif
 char bcm_nfc_location[120];
 
 static UINT8 nfa_dm_cfg[sizeof ( tNFA_DM_CFG ) ];

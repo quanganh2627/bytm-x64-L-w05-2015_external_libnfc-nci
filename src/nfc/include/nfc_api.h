@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 /******************************************************************************
  *
@@ -58,8 +76,9 @@
 
 /* 0xE0 ~0xFF are proprietary status codes */
 #define NFC_STATUS_CMD_STARTED          0xE3/* Command started successfully                     */
-#ifdef NXP_EXT
-#define NFC_STATUS_HW_TIMEOUT           0xEC
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NFC_STATUS_HW_TIMEOUT           0xEC/* changed from 0xE4 (as 0xE4 is defined for STATUS_EMVCO_PCD_COLLISOIN
+                                             NFCC Timeout in responding to an NCI command     */
 #else
 #define NFC_STATUS_HW_TIMEOUT           0xE4/* NFCC Timeout in responding to an NCI command     */
 #endif
@@ -346,7 +365,7 @@ typedef UINT8 tNFC_RF_TECH;
 #define NFC_PROTOCOL_T3T        NCI_PROTOCOL_T3T      /* Type3Tag    - NFC-F            */
 #define NFC_PROTOCOL_ISO_DEP    NCI_PROTOCOL_ISO_DEP  /* Type 4A,4B  - NFC-A or NFC-B   */
 #define NFC_PROTOCOL_NFC_DEP    NCI_PROTOCOL_NFC_DEP  /* NFCDEP/LLCP - NFC-A or NFC-F       */
-#ifdef NXP_EXT
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NFC_PROTOCOL_MIFARE     NCI_PROTOCOL_MIFARE
 #endif
 #define NFC_PROTOCOL_B_PRIME    NCI_PROTOCOL_B_PRIME
@@ -398,7 +417,7 @@ typedef UINT8 tNFC_BIT_RATE;
 #define NFC_INTERFACE_LLCP_LOW      NCI_INTERFACE_LLCP_LOW
 #define NFC_INTERFACE_LLCP_HIGH     NCI_INTERFACE_LLCP_HIGH
 #define NFC_INTERFACE_VS_T2T_CE     NCI_INTERFACE_VS_T2T_CE
-#ifdef NXP_EXT
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NFC_INTERFACE_MIFARE        NCI_INTERFACE_MIFARE
 #endif
 typedef tNCI_INTF_TYPE tNFC_INTF_TYPE;

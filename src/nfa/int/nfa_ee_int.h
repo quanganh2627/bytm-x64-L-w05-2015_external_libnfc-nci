@@ -15,6 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 
 /******************************************************************************
@@ -158,6 +177,10 @@ typedef struct
     tNFA_NFC_PROTOCOL       lb_protocol;        /* Listen B protocol    */
     tNFA_NFC_PROTOCOL       lf_protocol;        /* Listen F protocol    */
     tNFA_NFC_PROTOCOL       lbp_protocol;       /* Listen B' protocol   */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    tNFA_NFC_PROTOCOL       pa_protocol;        /* Passive poll A SWP Reader   */
+    tNFA_NFC_PROTOCOL       pb_protocol;        /* Passive poll B SWP Reader   */
+#endif
 } tNFA_EE_ECB;
 
 /* data type for NFA_EE_API_DISCOVER_EVT */
