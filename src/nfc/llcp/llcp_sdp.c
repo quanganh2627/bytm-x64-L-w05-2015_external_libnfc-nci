@@ -16,6 +16,25 @@
  *
  ******************************************************************************/
 
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 /******************************************************************************
  *
@@ -76,6 +95,17 @@ void llcp_sdp_check_send_snl (void)
         GKI_enqueue (&llcp_cb.lcb.sig_xmit_q, llcp_cb.sdp_cb.p_snl);
         llcp_cb.sdp_cb.p_snl = NULL;
     }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    else
+    {
+        /* Notify DTA after sending out SNL with SDRES not to send SNLs in AGF PDU */
+        if ((llcp_cb.p_dta_cback) && (llcp_cb.dta_snl_resp))
+        {
+            llcp_cb.dta_snl_resp = FALSE;
+            (*llcp_cb.p_dta_cback) ();
+        }
+    }
+#endif
 }
 
 /*******************************************************************************
@@ -312,6 +342,14 @@ UINT8 llcp_sdp_get_sap_by_name (char *p_name, UINT8 length)
             &&(strlen((char*)p_app_cb->p_service_name) == length)
             &&(!strncmp((char*)p_app_cb->p_service_name, p_name, length))  )
         {
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            /* if device is under LLCP DTA testing */
+            if (  (llcp_cb.p_dta_cback)
+                &&(!strncmp((char*)p_app_cb->p_service_name, "urn:nfc:sn:cl-echo-in", length))  )
+            {
+                llcp_cb.dta_snl_resp = TRUE;
+            }
+#endif
             return (sap);
         }
     }
@@ -380,6 +418,9 @@ void llcp_sdp_proc_deactivation (void)
     }
 
     llcp_cb.sdp_cb.next_tid = 0;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    llcp_cb.dta_snl_resp = FALSE;
+#endif
 }
 
 /*******************************************************************************

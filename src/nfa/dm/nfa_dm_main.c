@@ -15,6 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 
 /******************************************************************************
@@ -79,7 +98,10 @@ const tNFA_DM_ACTION nfa_dm_action[] =
     nfa_dm_ndef_dereg_hdlr,             /* NFA_DM_API_DEREG_NDEF_HDLR_EVT       */
     nfa_dm_act_reg_vsc,                 /* NFA_DM_API_REG_VSC_EVT               */
     nfa_dm_act_send_vsc,                /* NFA_DM_API_SEND_VSC_EVT              */
-    nfa_dm_act_disable_timeout          /* NFA_DM_TIMEOUT_DISABLE_EVT           */
+    nfa_dm_act_disable_timeout,          /* NFA_DM_TIMEOUT_DISABLE_EVT           */
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    nfa_dm_act_send_nxp                 /* NFA_DM_API_SEND_NXP_EVT              */
+#endif
 };
 
 /*****************************************************************************
@@ -287,9 +309,20 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
         **  Listen B Configuration
         */
         case NFC_PMID_LB_SENSB_INFO:
-            p_stored  = nfa_dm_cb.params.lb_sensb_info;
-            max_len   = NCI_PARAM_LEN_LB_SENSB_INFO;
-            p_cur_len = &nfa_dm_cb.params.lb_sensb_info_len;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            if(app_init == TRUE)
+            {
+#endif
+                p_stored  = nfa_dm_cb.params.lb_sensb_info;
+                max_len   = NCI_PARAM_LEN_LB_SENSB_INFO;
+                p_cur_len = &nfa_dm_cb.params.lb_sensb_info_len;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            }
+            else
+            {
+                update = FALSE;
+            }
+#endif
             break;
         case NFC_PMID_LB_NFCID0:
             p_stored  = nfa_dm_cb.params.lb_nfcid0;
@@ -333,10 +366,12 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
         /*
         **  ISO-DEP and NFC-DEP Configuration
         */
+#if(NFC_NXP_NOT_OPEN_INCLUDED != TRUE)
         case NFC_PMID_FWI:
             p_stored = nfa_dm_cb.params.fwi;
             max_len  = NCI_PARAM_LEN_FWI;
             break;
+#endif
         case NFC_PMID_WT:
             p_stored = nfa_dm_cb.params.wt;
             max_len  = NCI_PARAM_LEN_WT;

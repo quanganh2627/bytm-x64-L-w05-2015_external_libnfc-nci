@@ -15,8 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 /******************************************************************************
  *
  *  This file contains the NFA HCI related definitions from the
@@ -30,6 +47,11 @@
 /* Static gates */
 #define NFA_HCI_LOOP_BACK_GATE              0x04
 #define NFA_HCI_IDENTITY_MANAGEMENT_GATE    0x05
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#ifdef GEMATO_SE_SUPPORT
+#define NFC_HCI_DEFAULT_DEST_GATE           0XF0
+#endif
+#endif
 
 #define NFA_HCI_FIRST_HOST_SPECIFIC_GENERIC_GATE    0x10
 #define NFA_HCI_LAST_HOST_SPECIFIC_GENERIC_GATE     0xEF
@@ -42,7 +64,7 @@
 #define NFA_HCI_LINK_MANAGEMENT_PIPE        0x00
 #define NFA_HCI_ADMIN_PIPE                  0x01
 
-#ifdef NXP_EXT
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NFC_HCI_DEFAULT_UICC_CONN_PIPE      0x0A
 #define NFC_HCI_DEFAULT_ESE_CONN_PIPE       0x16
 #endif
@@ -56,7 +78,7 @@
 #define NFA_HCI_DH_HOST                     0x01
 #define NFA_HCI_UICC_HOST                   0x02
 
-#ifdef NXP_EXT
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NFA_HCI_ESE_HOST                    0xC0
 #endif
 
@@ -108,6 +130,9 @@
 #define NFA_HCI_EVT_POST_DATA               0x02
 #define NFA_HCI_EVT_HOT_PLUG                0x03
 
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NFA_HCI_EVT_WTX                     0x11
+#endif
 
 /* NFA HCI Connectivity gate Events */
 #define NFA_HCI_EVT_CONNECTIVITY            0x10
