@@ -15,6 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 
 /******************************************************************************
@@ -335,6 +354,14 @@ typedef UINT8 tT3T_POLL_RC;
 #define T4T_CMD_INS_SELECT              0xA4
 #define T4T_CMD_INS_READ_BINARY         0xB0
 #define T4T_CMD_INS_UPDATE_BINARY       0xD6
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define T4T_CMD_DES_CLASS               0x90
+#define T4T_CMD_INS_GET_HW_VERSION      0x60
+#define T4T_CMD_CREATE_AID              0xCA
+#define T4T_CMD_SELECT_APP              0x5A
+#define T4T_CMD_CREATE_DATAFILE         0xCD
+#define T4T_CMD_DES_WRITE               0x3D
+#endif
 #define T4T_CMD_P1_SELECT_BY_NAME       0x04
 #define T4T_CMD_P1_SELECT_BY_FILE_ID    0x00
 #define T4T_CMD_P2_FIRST_OR_ONLY_00H    0x00
@@ -377,6 +404,18 @@ typedef UINT8 tT3T_POLL_RC;
 #define T4T_FC_NO_WRITE_ACCESS          0xFF    /* no write access granted at all (read-only) */
 
 #define T4T_FILE_LENGTH_SIZE            0x02
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define T4T_ADDI_FRAME_RESP             0xAFU
+#define T4T_SIZE_IDENTIFIER_2K          0x16U
+#define T4T_SIZE_IDENTIFIER_4K          0x18U
+#define T4T_SIZE_IDENTIFIER_8K          0x1AU
+#define T4T_DESEV1_MAJOR_VERSION        0x01U
+#define T4T_TYPE_DESFIRE_EV1            0x01U
+#define T4T_DESEV0_MAJOR_VERSION        0x00U
+#define T4T_DESEV0_MINOR_VERSION        0x06U
+#define T4T_DES_EV1_NFC_APP_ID          0x010000
+#define T4T_DES_EV0_NFC_APP_ID          0x10EEEE
+#endif
 
 /*
 **

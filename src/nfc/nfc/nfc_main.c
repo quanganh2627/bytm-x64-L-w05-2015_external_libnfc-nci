@@ -322,7 +322,17 @@ void nfc_gen_cleanup (void)
     if (nfc_cb.flags & NFC_FL_DISCOVER_PENDING)
     {
         nfc_cb.flags &= ~NFC_FL_DISCOVER_PENDING;
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        if(nfc_cb.p_last_disc)
+        {
+            GKI_freebuf (nfc_cb.p_last_disc);
+            nfc_cb.p_last_disc = NULL;
+        }
+        nfc_cb.p_last_disc = nfc_cb.p_disc_pending;
+#else
         GKI_freebuf (nfc_cb.p_disc_pending);
+#endif
         nfc_cb.p_disc_pending = NULL;
     }
 
@@ -423,7 +433,16 @@ void nfc_main_handle_hal_evt (tNFC_HAL_EVT_MSG *p_msg)
             nfc_cb.flags &= ~NFC_FL_DISCOVER_PENDING;
             ps            = (UINT8 *)nfc_cb.p_disc_pending;
             nci_snd_discover_cmd (*ps, (tNFC_DISCOVER_PARAMS *)(ps + 1));
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            if(nfc_cb.p_last_disc)
+            {
+                GKI_freebuf( nfc_cb.p_last_disc);
+                nfc_cb.p_last_disc = NULL;
+            }
+            nfc_cb.p_last_disc = nfc_cb.p_disc_pending;
+#else
             GKI_freebuf (nfc_cb.p_disc_pending);
+#endif
             nfc_cb.p_disc_pending = NULL;
         }
         else
@@ -1153,8 +1172,17 @@ tNFC_STATUS NFC_Deactivate (tNFC_DEACT_TYPE deactivate_type)
             /* if HAL did not request for control, clear this bit now */
             nfc_cb.flags &= ~NFC_FL_CONTROL_REQUESTED;
         }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        if( nfc_cb.p_last_disc)
+        {
+            GKI_freebuf (nfc_cb.p_last_disc);
+            nfc_cb.p_last_disc = NULL;
+        }
+        nfc_cb.p_last_disc = nfc_cb.p_disc_pending;
+#else
         GKI_freebuf (nfc_cb.p_disc_pending);
-        nfc_cb.p_disc_pending = NULL;
+#endif
+	    nfc_cb.p_disc_pending = NULL;
         return NFC_STATUS_OK;
     }
 

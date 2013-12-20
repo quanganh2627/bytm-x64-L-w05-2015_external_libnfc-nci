@@ -15,8 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 /******************************************************************************
  *
  *  This file contains the action functions for the NFA HCI.
@@ -1244,7 +1261,13 @@ void nfa_hci_handle_admin_gate_cmd (UINT8 *p_data)
         STREAM_TO_UINT8 (pipe,        p_data);
 
         if (  (dest_gate == NFA_HCI_IDENTITY_MANAGEMENT_GATE)
-            ||(dest_gate == NFA_HCI_LOOP_BACK_GATE) )
+            ||(dest_gate == NFA_HCI_LOOP_BACK_GATE)
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#ifdef GEMATO_SE_SUPPORT
+            ||(dest_gate == NFC_HCI_DEFAULT_DEST_GATE)
+#endif
+#endif
+        )
         {
             response = nfa_hciu_add_pipe_to_static_gate (dest_gate, pipe, source_host, source_gate);
         }
@@ -1692,7 +1715,7 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
     tNFA_HCI_DYN_PIPE   *p_pipe = nfa_hciu_find_pipe_by_pid (pipe_id);
     tNFA_HCI_DYN_GATE   *p_gate;
 
-#ifdef NXP_EXT
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
     /* On NXP chipset, connectivity pipes always receive the same id.
      * If the pipe doesn't exist and if the pipe id is one of the ids which
      * are normally reserved for connectivity then it's possible to fix
@@ -1732,6 +1755,31 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
     {
         nfa_hci_handle_connectivity_gate_pkt (p_data, data_len, p_pipe);
     }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#ifdef GEMATO_SE_SUPPORT
+    else if (p_pipe->local_gate == NFC_HCI_DEFAULT_DEST_GATE)
+    {
+        /* Check if data packet is a command, response or event */
+        p_gate = nfa_hci_cb.cfg.dyn_gates;
+        p_gate->gate_owner = 0x0800;
+
+        switch (nfa_hci_cb.type)
+        {
+        case NFA_HCI_COMMAND_TYPE:
+            nfa_hci_handle_generic_gate_cmd (p_data, (UINT8) data_len, p_gate, p_pipe);
+            break;
+
+        case NFA_HCI_RESPONSE_TYPE:
+            nfa_hci_handle_generic_gate_rsp (p_data, (UINT8) data_len, p_gate, p_pipe);
+            break;
+
+        case NFA_HCI_EVENT_TYPE:
+            nfa_hci_handle_generic_gate_evt (p_data, data_len, p_gate, p_pipe);
+            break;
+        }
+    }
+#endif
+#endif
     else
     {
         p_gate = nfa_hciu_find_gate_by_gid (p_pipe->local_gate);
@@ -2165,8 +2213,15 @@ static void nfa_hci_handle_generic_gate_evt (UINT8 *p_data, UINT16 data_len, tNF
         evt_data.rcvd_evt.status    = NFA_STATUS_OK;
 
     evt_data.rcvd_evt.p_evt_buf = p_data;
-    nfa_hci_cb.rsp_buf_size     = 0;
-    nfa_hci_cb.p_rsp_buf        = NULL;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    if(nfa_hci_cb.inst != NFA_HCI_EVT_WTX)
+    {
+#endif
+        nfa_hci_cb.rsp_buf_size     = 0;
+        nfa_hci_cb.p_rsp_buf        = NULL;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    }
+#endif
 
     /* notify NFA_HCI_EVENT_RCVD_EVT to the application */
     nfa_hciu_send_to_app (NFA_HCI_EVENT_RCVD_EVT, &evt_data, p_gate->gate_owner);

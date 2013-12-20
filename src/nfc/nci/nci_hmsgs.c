@@ -15,6 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 
 /******************************************************************************
@@ -108,21 +127,54 @@ UINT8 nci_snd_core_get_config (UINT8 *param_ids, UINT8 num_ids)
 {
     BT_HDR *p;
     UINT8 *pp;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    UINT8 bytes;
+    UINT8 propConfigCnt;
+#endif
 
     if ((p = NCI_GET_CMD_BUF (num_ids)) == NULL)
         return (NCI_STATUS_FAILED);
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    UINT32 idx = 0;
+    UINT8 *params =  param_ids;
+    propConfigCnt=0;
+    for(idx=0; idx<num_ids; idx++)
+    {
+        if(*params == 0xA0)
+        {
+            params++;
+            propConfigCnt++;
+        }
+        params++;
+
+    }
+    bytes = (num_ids - propConfigCnt) + (propConfigCnt<<1);
+#endif
 
     p->event            = BT_EVT_TO_NFC_NCI;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    p->len              = NCI_MSG_HDR_SIZE + bytes + 1;
+#else
     p->len              = NCI_MSG_HDR_SIZE + num_ids + 1;
+#endif
+
     p->offset           = NCI_MSG_OFFSET_SIZE;
     p->layer_specific   = 0;
     pp                  = (UINT8 *) (p + 1) + p->offset;
 
     NCI_MSG_BLD_HDR0 (pp, NCI_MT_CMD, NCI_GID_CORE);
     NCI_MSG_BLD_HDR1 (pp, NCI_MSG_CORE_GET_CONFIG);
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    UINT8_TO_STREAM (pp, (UINT8) (bytes + 1));
+#else
     UINT8_TO_STREAM (pp, (UINT8) (num_ids + 1));
+#endif
     UINT8_TO_STREAM (pp, num_ids);
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    ARRAY_TO_STREAM (pp, param_ids, bytes);
+#else
     ARRAY_TO_STREAM (pp, param_ids, num_ids);
+#endif
 
     nfc_ncif_send_cmd (p);
     return (NCI_STATUS_OK);

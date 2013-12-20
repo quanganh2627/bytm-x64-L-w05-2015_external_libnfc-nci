@@ -59,7 +59,11 @@
 #define NFA_DTA_SCRATCH_BUF_SIZE        T3T_MSG_BLOCKSIZE
 
 #ifndef NFA_DTA_DEFAULT_CO_OUT_DSAP
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NFA_DTA_DEFAULT_CO_OUT_DSAP     0x10    /* Default SAP[LT,CO-OUT-DEST] if SDP was not performed to get SAP from the LT */
+#else
 #define NFA_DTA_DEFAULT_CO_OUT_DSAP     0x12    /* Default SAP[LT,CO-OUT-DEST] if SDP was not performed to get SAP from the LT */
+#endif
 #endif
 
 /*****************************************************************************
@@ -72,6 +76,10 @@ typedef struct {
     BOOLEAN t4at_nfcdep_priority;           /* NFA_DTA_CFG_T4AT_NFCDEP_PRIORITY */
     BOOLEAN reactivation;                   /* NFA_DTA_CFG_REACTIVATION   */
     UINT16  total_duration;                 /* NFA_DTA_CFG_TOTAL_DURATION */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    BOOLEAN enable_dta_llcp;                /* NFA_DTA_CFG_LLCP */
+    tNFA_DTA_SNEP_MODE dta_snep_mode;       /* NFA_DTA_CFG_SNEP */
+#endif
     tNFA_DTA_EMVCO_PCD_MODE emvco_pcd_mode; /* NFA_DTA_CFG_EMVCO_PCD */
 } tNFA_DTA_CONFIG;
 
@@ -314,7 +322,15 @@ typedef struct {
     tNFA_HANDLE             snep_server_handle;
     tNFA_HANDLE             snep_server_conn_handle;
     tNFA_HANDLE             snep_client_handle;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NFA_DTA_SNEP_CLIENT_TEST_FLAGS_DEFAULT_SERVER    0x01
+#define NFA_DTA_SNEP_CLIENT_TEST_FLAGS_EXTENDED_SERVER   0x02
+#define NFA_DTA_SNEP_CLIENT_TEST_FLAGS_PUT_SHORT_NDEF    0x04
+#define NFA_DTA_SNEP_CLIENT_TEST_FLAGS_PUT_LONG_NDEF     0x08
+#define NFA_DTA_SNEP_CLIENT_TEST_FLAGS_GET               0x10
 
+    UINT8                   snep_client_test_flags;
+#endif
     UINT8                   *p_snep_short_ndef;
     UINT32                  snep_short_ndef_size;
     UINT8                   *p_snep_long_ndef;
@@ -408,6 +424,9 @@ void nfa_dta_llcp_disconnect_co_echo_out (void);
 void nfa_dta_snep_init (void);
 void nfa_dta_snep_register (void);
 void nfa_dta_snep_deregister (void);
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+void nfa_dta_snep_mode (tNFA_DTA_SNEP_MODE mode);
+#endif
 
 void nfa_dta_emvco_pcd_config_nfcc (BOOLEAN enable);
 void nfa_dta_emvco_pcd_start (void);

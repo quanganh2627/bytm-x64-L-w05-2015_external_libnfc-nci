@@ -15,6 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 
 /******************************************************************************
@@ -62,6 +81,9 @@ extern "C" {
 #define NFC_TTYPE_RW_T4T_RESPONSE           107
 #define NFC_TTYPE_RW_I93_RESPONSE           108
 #define NFC_TTYPE_CE_T4T_UPDATE             109
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NFC_TTYPE_P2P_PRIO_RESPONSE         110  /* added for p2p prio logic timer */
+#endif
 #define NFC_TTYPE_VS_BASE                   200
 
 
@@ -77,7 +99,13 @@ enum
     NFC_STATE_OPEN,                 /* NFC link is activated                    */
     NFC_STATE_CLOSING,              /* de-activating                            */
     NFC_STATE_W4_HAL_CLOSE,         /* waiting for HAL_NFC_POST_INIT_CPLT_EVT   */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    NFC_STATE_NFCC_POWER_OFF_SLEEP, /* NFCC is power-off sleep mode             */
+    NFC_STATE_RECOVERY,             /* NFCC is Recovery mode                    */
+    NFC_STATE_RECOVERY_CPLT         /* NFCC is Recovery complete mode           */
+#else
     NFC_STATE_NFCC_POWER_OFF_SLEEP  /* NFCC is power-off sleep mode             */
+#endif
 };
 typedef UINT8 tNFC_STATE;
 
@@ -143,6 +171,9 @@ typedef void (tNFC_PWR_ST_CBACK) (void);
 
 /* NCI command buffer contains a VSC (in BT_HDR.layer_specific) */
 #define NFC_WAIT_RSP_VSC            0x01
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NFC_WAIT_RSP_NXP            0x02
+#endif
 
 /* NFC control blocks */
 typedef struct
@@ -154,6 +185,9 @@ typedef struct
     tNFC_RESPONSE_CBACK *p_resp_cback;
     tNFC_TEST_CBACK     *p_test_cback;
     tNFC_VS_CBACK       *p_vs_cb[NFC_NUM_VS_CBACKS];/* Register for vendor specific events  */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    UINT8               nxpCbflag;
+#endif
 
 #if (NFC_RW_ONLY == FALSE)
     /* NFCC information at init rsp */
@@ -168,6 +202,9 @@ typedef struct
     UINT16              nci_interfaces;             /* the NCI interfaces of NFCC       */
     UINT8               num_disc_maps;              /* number of RF Discovery interface mappings */
     void               *p_disc_pending;            /* the parameters associated with pending NFC_DiscoveryStart */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    void               *p_last_disc;            /* the parameters associated with pending NFC_DiscoveryStart */
+#endif
 
     /* NFC_TASK timer management */
     TIMER_LIST_Q        timer_queue;                /* 1-sec timer event queue */
@@ -176,11 +213,22 @@ typedef struct
     TIMER_LIST_ENT      deactivate_timer;           /* Timer to wait for deactivation */
 
     tNFC_STATE          nfc_state;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    tNFC_STATE          old_nfc_state;
+#endif
     UINT8               trace_level;
     UINT8               last_hdr[NFC_SAVED_HDR_SIZE];/* part of last NCI command header */
     UINT8               last_cmd[NFC_SAVED_CMD_SIZE];/* part of last NCI command payload */
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    UINT8               recov_last_hdr[NFC_SAVED_HDR_SIZE];/* part of last NCI command header */
+    UINT8               recov_last_cmd[NFC_SAVED_CMD_SIZE];/* part of last NCI command payload */
+#endif
     void                *p_vsc_cback;       /* the callback function for last VSC command */
     BUFFER_Q            nci_cmd_xmit_q;     /* NCI command queue */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    BUFFER_Q            nci_cmd_recov_xmit_q;     /* NCI recovery command queue */
+#endif
     TIMER_LIST_ENT      nci_wait_rsp_timer; /* Timer for waiting for nci command response */
     UINT16              nci_wait_rsp_tout;  /* NCI command timeout (in ms) */
     UINT8               nci_wait_rsp;       /* layer_specific for last NCI message */

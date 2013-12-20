@@ -251,6 +251,13 @@ void nfa_ce_discovery_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_data)
         break;
 
     case NFA_DM_RF_DISC_ACTIVATED_EVT:
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        /*
+         *TODO: Handle the Reader over SWP.
+         * Pass this info to JNI as START_READER_EVT.
+         * Handle in nfa_ce_activate_ntf.
+         */
+#endif
         ce_msg.activate_ntf.hdr.event = NFA_CE_ACTIVATE_NTF_EVT;
         ce_msg.activate_ntf.p_activation_params = &p_data->activate;
         nfa_ce_hdl_event ((BT_HDR *) &ce_msg);
@@ -450,6 +457,16 @@ tNFA_STATUS nfa_ce_start_listening (void)
                     {
                         listen_mask |= NFA_DM_DISC_MASK_L_B_PRIME;
                     }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                    if (p_cb->listen_info[listen_info_idx].tech_mask & NFA_TECHNOLOGY_MASK_A_ACTIVE)
+                    {
+                        listen_mask |= NFA_DM_DISC_MASK_LAA_NFC_DEP;
+                    }
+                    if (p_cb->listen_info[listen_info_idx].tech_mask & NFA_TECHNOLOGY_MASK_F_ACTIVE)
+                    {
+                        listen_mask |= NFA_DM_DISC_MASK_LFA_NFC_DEP;
+                    }
+#endif
                 }
 
                 if (listen_mask)
@@ -763,8 +780,19 @@ BOOLEAN nfa_ce_activate_ntf (tNFA_CE_MSG *p_ce_msg)
     /* Store activation parameters */
     memcpy (&p_cb->activation_params, p_activation_params, sizeof (tNFC_ACTIVATE_DEVT));
 
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    if (p_cb->activation_params.intf_param.type == NCI_INTERFACE_UICC_DIRECT || p_cb->activation_params.intf_param.type == NCI_INTERFACE_ESE_DIRECT )
+    {
+        memcpy (&(conn_evt.activated.activate_ntf), &p_cb->activation_params, sizeof (tNFC_ACTIVATE_DEVT));
+
+        (*p_cb->p_active_conn_cback) (NFA_ACTIVATED_EVT, &conn_evt);
+    }
+    /* Find the listen_info entry corresponding to this activation */
+    else if (p_cb->activation_params.protocol == NFA_PROTOCOL_T3T)
+#else
     /* Find the listen_info entry corresponding to this activation */
     if (p_cb->activation_params.protocol == NFA_PROTOCOL_T3T)
+#endif
     {
         /* Look for T3T entries in listen_info table that match activated system code and NFCID2 */
         for (listen_info_idx=0; listen_info_idx<NFA_CE_LISTEN_INFO_IDX_INVALID; listen_info_idx++)
