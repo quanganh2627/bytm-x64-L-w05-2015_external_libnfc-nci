@@ -102,9 +102,6 @@ enum
     RW_T4T_PRESENCE_CHECK_EVT,                  /* Response to RW_T4tPresenceCheck          */
     RW_T4T_RAW_FRAME_EVT,                       /* Response of raw frame sent               */
     RW_T4T_INTF_ERROR_EVT,                      /* RF Interface error event                 */
-#ifdef NXP_EXT
-    RW_T4T_NDEF_FORMAT_CPLT_EVT,                /* Format operation completed               */
-#endif
     RW_T4T_MAX_EVT,
 
     /* ISO 15693 tag events for tRW_CBACK */

@@ -353,9 +353,6 @@ typedef UINT8 tNCI_STATUS;
 #define NCI_INTERFACE_NFC_DEP           3
 #define NCI_INTERFACE_MAX               NCI_INTERFACE_NFC_DEP
 #define NCI_INTERFACE_FIRST_VS          0x80
-#ifdef NXP_EXT
-#define NCI_INTERFACE_MIFARE            0x80
-#endif
 typedef UINT8 tNCI_INTF_TYPE;
 
 /**********************************************
@@ -383,22 +380,9 @@ typedef UINT8 tNCI_INTF_TYPE;
 /**********************************************
  * Proprietary Protocols
  **********************************************/
-#ifdef NXP_EXT
-#ifndef NCI_PROTOCOL_MIFARE
-#define NCI_PROTOCOL_MIFARE             0x80
-#endif
-#ifndef NCI_PROTOCOL_18092_ACTIVE
-#define NCI_PROTOCOL_18092_ACTIVE       0x05
-#endif
-#else
-#ifndef NCI_PROTOCOL_MIFARE
-#define NCI_PROTOCOL_MIFARE             0xFF
-#endif
 #ifndef NCI_PROTOCOL_18092_ACTIVE
 #define NCI_PROTOCOL_18092_ACTIVE       0x80
 #endif
-#endif
-
 #ifndef NCI_PROTOCOL_B_PRIME
 #define NCI_PROTOCOL_B_PRIME            0x81
 #endif

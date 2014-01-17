@@ -42,11 +42,6 @@
 #define NFA_HCI_LINK_MANAGEMENT_PIPE        0x00
 #define NFA_HCI_ADMIN_PIPE                  0x01
 
-#ifdef NXP_EXT
-#define NFC_HCI_DEFAULT_UICC_CONN_PIPE      0x0A
-#define NFC_HCI_DEFAULT_ESE_CONN_PIPE       0x16
-#endif
-
 /* Dynamic pipe range */
 #define NFA_HCI_FIRST_DYNAMIC_PIPE          0x02
 #define NFA_HCI_LAST_DYNAMIC_PIPE           0x6F
@@ -55,10 +50,6 @@
 #define NFA_HCI_HOST_CONTROLLER             0x00
 #define NFA_HCI_DH_HOST                     0x01
 #define NFA_HCI_UICC_HOST                   0x02
-
-#ifdef NXP_EXT
-#define NFA_HCI_ESE_HOST                    0xC0
-#endif
 
 /* Type of instruction */
 #define NFA_HCI_COMMAND_TYPE                0x00
