@@ -2208,6 +2208,15 @@ static void nfa_dm_disc_sm_poll_active (tNFA_DM_RF_DISC_SM_EVENT event,
     switch (event)
     {
     case NFA_DM_RF_DEACTIVATE_CMD:
+#ifdef NXP_EXT
+        if (nfa_dm_cb.disc_cb.activated_protocol == NCI_PROTOCOL_MIFARE)
+        {
+            nfa_dm_cb.disc_cb.deact_pending      = TRUE;
+            nfa_dm_cb.disc_cb.pending_deact_type = p_data->deactivate_type;
+            status = nfa_dm_send_deactivate_cmd(p_data->deactivate_type);
+            break;
+        }
+#endif
         if (old_sleep_wakeup_flag)
         {
             /* sleep wakeup is already enabled when deactivate cmd is requested,

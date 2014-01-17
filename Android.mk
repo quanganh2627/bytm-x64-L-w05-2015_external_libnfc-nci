@@ -12,7 +12,6 @@ NFA := src/nfa
 NFC := src/nfc
 HAL := src/hal
 UDRV := src/udrv
-HALIMPL := halimpl/bcm2079x
 D_CFLAGS := -DANDROID -DBUILDCFG=1
 
 
@@ -20,6 +19,11 @@ D_CFLAGS := -DANDROID -DBUILDCFG=1
 # Build shared library system/lib/libnfc-nci.so for stack code.
 
 include $(CLEAR_VARS)
+
+ifeq ($(strip $(BOARD_HAVE_NXP_PN547)), true)
+LOCAL_CFLAGS += -DNXP_EXT
+endif # BOARD_HAVE_NXP_PN547
+
 LOCAL_PRELINK_MODULE := false
 LOCAL_ARM_MODE := arm
 LOCAL_MODULE := libnfc-nci
@@ -47,6 +51,9 @@ LOCAL_SRC_FILES := \
 include $(BUILD_SHARED_LIBRARY)
 
 
+ifeq ($(BOARD_HAVE_BCM2079X),true)
+HALIMPL := halimpl/bcm2079x
+
 ######################################
 # Build shared library system/lib/hw/nfc_nci.*.so for Hardware Abstraction Layer.
 # Android's generic HAL (libhardware.so) dynamically loads this shared library.
@@ -73,6 +80,7 @@ LOCAL_C_INCLUDES := external/stlport/stlport bionic/ bionic/libstdc++/include \
 LOCAL_CFLAGS := $(D_CFLAGS) -DNFC_HAL_TARGET=TRUE -DNFC_RW_ONLY=TRUE
 LOCAL_CPPFLAGS := $(LOCAL_CFLAGS)
 include $(BUILD_SHARED_LIBRARY)
+endif # BOARD_HAVE_BCM2079X
 
 
 ######################################
