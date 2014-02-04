@@ -1497,8 +1497,17 @@ static tNFA_STATUS nfa_dm_disc_notify_activation (tNFC_DISCOVER *p_data)
             }
         }
 
-        if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
-            (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_ACTIVATED_EVT, p_data);
+        if (xx < NFA_DM_DISC_NUM_ENTRIES)
+        {
+           if (nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)
+               (*(nfa_dm_cb.disc_cb.entry[xx].p_disc_cback)) (NFA_DM_RF_DISC_ACTIVATED_EVT, p_data);
+        }
+        else
+        {
+           nfa_dm_cb.disc_cb.activated_protocol = NFA_PROTOCOL_INVALID;
+           nfa_dm_cb.disc_cb.activated_handle   = NFA_HANDLE_INVALID;
+           return (NFA_STATUS_FAILED);
+        }
 
         return (NFA_STATUS_OK);
     }
