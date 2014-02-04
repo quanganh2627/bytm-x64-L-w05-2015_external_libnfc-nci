@@ -862,7 +862,7 @@ tNFC_STATUS rw_t2t_read_locks (void)
         }
     }
 
-    while (num_locks < p_t2t->num_lockbytes)
+    while ((num_locks < p_t2t->num_lockbytes) && (num_locks < RW_T2T_MAX_LOCK_BYTES))
     {
         if (p_t2t->lockbyte[num_locks].b_lock_read == FALSE)
         {
