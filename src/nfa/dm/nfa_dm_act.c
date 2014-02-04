@@ -1835,10 +1835,24 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
             if(p_tech_params->param.pa.nfcid1_len == 0)
             {
-                nfcid_len = sizeof(p_params->t1t.uid);
+                if (p_params)
+                {
+                   nfcid_len = sizeof(p_params->t1t.uid);
+                }
+                else
+                {
+                   NFA_TRACE_DEBUG0 ("nfa_dm_notify_activation_status (): p_params NOT initialised");
+                }
                 p_nfcid   = p_params->t1t.uid;
                 evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1_len = nfcid_len;
-                memcpy (evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1,p_nfcid,nfcid_len);
+                if(p_nfcid)
+                {
+                   memcpy (evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1,p_nfcid,nfcid_len);
+                }
+                else
+                {
+                   NFA_TRACE_DEBUG0 ("nfa_dm_notify_activation_status (): p_nfcid NOT initialised");
+                }
             }
             else
             {

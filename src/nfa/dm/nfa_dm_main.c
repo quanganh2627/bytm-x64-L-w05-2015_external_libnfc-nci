@@ -321,6 +321,7 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
             else
             {
                 update = FALSE;
+                p_stored = NULL;
             }
 #endif
             break;

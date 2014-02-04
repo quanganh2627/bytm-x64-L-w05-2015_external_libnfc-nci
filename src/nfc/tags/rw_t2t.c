@@ -354,7 +354,14 @@ void rw_t2t_conn_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p_data)
         }
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
         /* Free the response buffer in case of invalid response*/
-        GKI_freebuf((BT_HDR *) (p_data->data.p_data));
+        if(p_data != NULL)
+        {
+            GKI_freebuf((BT_HDR *) (p_data->data.p_data));
+        }
+        else
+        {
+            RW_TRACE_DEBUG2 ("rw_t2t_conn_cback: conn_id=%i, evt=%i  p_data = NULL", conn_id, event);
+        }
 #endif
         break;
 
