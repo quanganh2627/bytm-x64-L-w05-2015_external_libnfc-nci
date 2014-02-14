@@ -1802,7 +1802,7 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
 {
     tNFA_CONN_EVT_DATA  evt_data;
     tNFC_RF_TECH_PARAMS *p_tech_params;
-    UINT8               *p_nfcid = NULL, nfcid_len;
+    UINT8               *p_nfcid = NULL, nfcid_len = 0;
 
     NFA_TRACE_DEBUG1 ("nfa_dm_notify_activation_status (): status:0x%X", status);
 
@@ -1838,12 +1838,13 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
                 if (p_params)
                 {
                    nfcid_len = sizeof(p_params->t1t.uid);
+                   p_nfcid   = p_params->t1t.uid;
                 }
                 else
                 {
                    NFA_TRACE_DEBUG0 ("nfa_dm_notify_activation_status (): p_params NOT initialised");
                 }
-                p_nfcid   = p_params->t1t.uid;
+
                 evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1_len = nfcid_len;
                 if(p_nfcid)
                 {
@@ -1938,7 +1939,16 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
         nfa_dm_cb.activated_tech_mode = p_tech_params->mode;
         nfa_dm_cb.activated_nfcid_len = nfcid_len;
         if (nfcid_len)
-            memcpy (nfa_dm_cb.activated_nfcid, p_nfcid, nfcid_len);
+        {
+            if(p_nfcid)
+            {
+               memcpy (nfa_dm_cb.activated_nfcid, p_nfcid, nfcid_len);
+            }
+            else
+            {
+               NFA_TRACE_DEBUG0 ("nfa_dm_notify_activation_status (): p_nfcid NOT initialised");
+            }
+        }
 
         nfa_dm_cb.flags |= NFA_DM_FLAGS_SEND_DEACTIVATED_EVT;
         nfa_dm_conn_cback_event_notify (NFA_ACTIVATED_EVT, &evt_data);
