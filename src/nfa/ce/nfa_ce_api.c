@@ -47,7 +47,11 @@ tNFA_STATUS nfa_ce_api_deregister_listen (tNFA_HANDLE handle, UINT32 listen_info
     tNFA_CE_MSG      *p_ce_msg;
 
     /* Validate handle */
-    if (  (listen_info != NFA_CE_LISTEN_INFO_UICC)
+    if ((listen_info != NFA_CE_LISTEN_INFO_UICC
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            && listen_info != NFA_CE_LISTEN_INFO_ESE
+#endif
+)
         &&((handle & NFA_HANDLE_GROUP_MASK) != NFA_HANDLE_GROUP_CE)  )
     {
         NFA_TRACE_ERROR0 ("nfa_ce_api_reregister_listen: Invalid handle");
@@ -228,6 +232,65 @@ tNFA_STATUS NFA_CeConfigureUiccListenTech (tNFA_HANDLE ee_handle,
 #endif
     return (NFA_STATUS_FAILED);
 }
+
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+/*******************************************************************************
+**
+** Function         NFA_CeConfigureEseListenTech
+**
+** Description      Configure listening for the Ese, using the specified
+**                  technologies.
+**
+**                  Events will be notifed using the tNFA_CONN_CBACK
+**                  (registered during NFA_Enable)
+**
+**                  The NFA_CE_ESE_LISTEN_CONFIGURED_EVT reports the status of the
+**                  operation.
+**
+**                  Activation and deactivation are reported using the
+**                  NFA_ACTIVATED_EVT and NFA_DEACTIVATED_EVT events
+**
+** Note:            If RF discovery is started, NFA_StopRfDiscovery()/NFA_RF_DISCOVERY_STOPPED_EVT
+**                  should happen before calling this function
+**
+** Returns:
+**                  NFA_STATUS_OK, if command accepted
+**                  NFA_STATUS_FAILED: otherwise
+**
+*******************************************************************************/
+tNFA_STATUS NFA_CeConfigureEseListenTech(tNFA_HANDLE ee_handle,
+                                           tNFA_TECHNOLOGY_MASK tech_mask)
+{
+#if (NFC_NFCEE_INCLUDED == TRUE)
+    tNFA_CE_MSG *p_msg;
+
+    NFA_TRACE_API1("NFA_CeConfigureEseListenTech() ee_handle = 0x%x", ee_handle);
+
+    /* If tech_mask is zero, then app is disabling listening for specified uicc */
+    if (tech_mask == 0)
+    {
+        return (nfa_ce_api_deregister_listen(ee_handle, NFA_CE_LISTEN_INFO_ESE));
+    }
+
+    /* Otherwise then app is configuring ese listen for the specificed technologies */
+    if ((p_msg = (tNFA_CE_MSG *) GKI_getbuf((UINT16) sizeof(tNFA_CE_MSG))) != NULL)
+    {
+        p_msg->reg_listen.hdr.event   = NFA_CE_API_REG_LISTEN_EVT;
+        p_msg->reg_listen.listen_type = NFA_CE_REG_TYPE_ESE;
+
+        p_msg->reg_listen.ee_handle   = ee_handle;
+        p_msg->reg_listen.tech_mask   = tech_mask;
+
+        nfa_sys_sendmsg(p_msg);
+
+        return (NFA_STATUS_OK);
+    }
+#else
+    NFA_TRACE_ERROR0("NFA_CeConfigureEseListenTech() NFCEE related functions are not enabled!");
+#endif
+    return (NFA_STATUS_FAILED);
+}
+#endif
 
 /*******************************************************************************
 **

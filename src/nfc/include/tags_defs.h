@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright(C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -221,7 +221,11 @@
 #define T2T_TLEN_LOCK_CTRL_TLV    3      /* Tag len for LOCK_CTRL TLV per spec */
 #define T2T_TLEN_MEM_CTRL_TLV     3      /* Tag len for MEM_CTRL TLV per spec */
 
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define T2T_MAX_SECTOR            3      /* Maximum number of sectors supported */
+#else
 #define T2T_MAX_SECTOR            2      /* Maximum number of sectors supported */
+#endif
 
 #define T2T_TLV_TYPE_LEN                1     /* Tlv type identifier len                */
 

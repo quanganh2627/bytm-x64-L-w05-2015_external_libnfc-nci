@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright(C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -431,6 +431,11 @@ typedef UINT8 tNCI_INTF_TYPE;
 #ifndef NCI_PROTOCOL_KOVIO
 #define NCI_PROTOCOL_KOVIO              0x8a
 #endif
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#ifndef NCI_PROTOCOL_T3BT
+#define NCI_PROTOCOL_T3BT               0x8b
+#endif
+#endif
 
 
 /* Discovery Types/Detected Technology and Mode */
@@ -471,6 +476,9 @@ typedef UINT8 tNCI_DISCOVERY_TYPE;
 #define NCI_ROUTE_PWR_STATE_ON          0x01        /* The device is on */
 #define NCI_ROUTE_PWR_STATE_SWITCH_OFF  0x02        /* The device is switched off */
 #define NCI_ROUTE_PWR_STATE_BATT_OFF    0x04        /* The device's battery is removed */
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NCI_ROUTE_PWR_STATE_SCREEN_OFF  0x80        /* The device is screen off mode */
+#endif
 
 #define NCI_NFCEE_TAG_HW_ID             0x00       /* Hardware / Registration Identification  */
 #define NCI_NFCEE_TAG_ATR_BYTES         0x01       /* ATR Bytes  */
