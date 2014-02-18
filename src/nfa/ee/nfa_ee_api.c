@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -465,6 +465,71 @@ tNFA_STATUS NFA_EeAddAidRouting(tNFA_HANDLE          ee_handle,
     return status;
 }
 
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+/*******************************************************************************
+**
+** Function         NFA_AddEePowerState
+**
+** Description      This function is called to add power state in the
+**                  listen mode routing table in NFCC.
+**
+** Note:            If RF discovery is started, NFA_StopRfDiscovery()/NFA_RF_DISCOVERY_STOPPED_EVT
+**                  should happen before calling this function
+**
+** Note:            NFA_EeUpdateNow() should be called after last NFA-EE function
+**                  to change the listen mode routing is called.
+**
+** Returns          NFA_STATUS_OK if successfully initiated
+**                  NFA_STATUS_FAILED otherwise
+**                  NFA_STATUS_INVALID_PARAM If bad parameter
+**
+*******************************************************************************/
+tNFA_STATUS NFA_AddEePowerState(tNFA_HANDLE          ee_handle,
+                                tNFA_EE_PWR_STATE    power_state_mask)
+{
+    tNFA_STATUS status = NFA_STATUS_FAILED;
+    UINT8       nfcee_id = (UINT8)(ee_handle & 0xFF);
+    tNFA_EE_ECB *p_cb;
+    UINT8 xx  = 0 ;
+
+    NFA_TRACE_API1 ("NFA_AddEePowerState(): handle:<0x%x>", ee_handle);
+    p_cb = nfa_ee_find_ecb (nfcee_id);
+
+    /* validate parameters */
+    if ((p_cb == NULL))
+    {
+        status = NFA_STATUS_INVALID_PARAM;
+    }
+
+    if((power_state_mask & NFA_EE_PWR_STATE_SWITCH_OFF) != 0x00)
+    {
+        for(xx=0; xx < p_cb->aid_entries; xx++)
+        {
+            p_cb->aid_pwr_cfg[xx] |= power_state_mask;
+            p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_AID;
+        }
+
+        /* For tech and proto only enable power off mode*/
+        p_cb->proto_switch_off |= p_cb->proto_switch_on;
+        p_cb->tech_switch_off |= p_cb->tech_switch_on;
+    }
+    else
+    {
+        for(xx=0; xx < p_cb->aid_entries; xx++)
+        {
+            p_cb->aid_pwr_cfg[xx] &= power_state_mask;
+            p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_AID;
+        }
+
+        p_cb->proto_switch_off &= 0x00;
+        p_cb->tech_switch_off &= 0x00;
+    }
+
+    p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_TECH|NFA_EE_ECB_FLAGS_PROTO;
+
+    return status;
+}
+#endif
 
 /*******************************************************************************
 **

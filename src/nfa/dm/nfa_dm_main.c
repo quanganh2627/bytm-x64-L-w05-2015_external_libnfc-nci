@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -212,7 +212,11 @@ BOOLEAN nfa_dm_is_protocol_supported (tNFC_PROTOCOL protocol, UINT8 sel_res)
             ||(protocol == NFC_PROTOCOL_T3T)
             ||(protocol == NFC_PROTOCOL_ISO_DEP)
             ||(protocol == NFC_PROTOCOL_NFC_DEP)
-            ||(protocol == NFC_PROTOCOL_15693)  );
+            ||(protocol == NFC_PROTOCOL_15693)
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            ||(protocol == NFC_PROTOCOL_T3BT)
+#endif
+            );
 }
 /*******************************************************************************
 **
@@ -246,7 +250,7 @@ BOOLEAN nfa_dm_is_active (void)
 *******************************************************************************/
 tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOLEAN app_init)
 {
-    UINT8 type, len, *p_value, *p_stored, max_len;
+    UINT8 type, len, *p_value, *p_stored = NULL, max_len = 0;
     UINT8 xx = 0, updated_len = 0, *p_cur_len;
     BOOLEAN update;
     tNFC_STATUS nfc_status;

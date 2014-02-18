@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -921,7 +921,7 @@ tNFA_STATUS NFA_HciAddStaticPipe (tNFA_HANDLE hci_handle, UINT8 host, UINT8 gate
         return (NFA_STATUS_FAILED);
     }
 #if(NFC_NXP_NOT_OPEN_INCLUDED != TRUE)
-#ifndef GEMATO_SE_SUPPORT
+#ifndef GEMALTO_SE_SUPPORT
 #endif
     if (pipe <= NFA_HCI_LAST_DYNAMIC_PIPE)
     {

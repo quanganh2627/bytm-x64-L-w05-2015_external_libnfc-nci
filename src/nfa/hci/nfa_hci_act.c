@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1263,7 +1263,7 @@ void nfa_hci_handle_admin_gate_cmd (UINT8 *p_data)
         if (  (dest_gate == NFA_HCI_IDENTITY_MANAGEMENT_GATE)
             ||(dest_gate == NFA_HCI_LOOP_BACK_GATE)
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
-#ifdef GEMATO_SE_SUPPORT
+#ifdef GEMALTO_SE_SUPPORT
             ||(dest_gate == NFC_HCI_DEFAULT_DEST_GATE)
 #endif
 #endif
@@ -1715,25 +1715,6 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
     tNFA_HCI_DYN_PIPE   *p_pipe = nfa_hciu_find_pipe_by_pid (pipe_id);
     tNFA_HCI_DYN_GATE   *p_gate;
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
-    /* On NXP chipset, connectivity pipes always receive the same id.
-     * If the pipe doesn't exist and if the pipe id is one of the ids which
-     * are normally reserved for connectivity then it's possible to fix
-     * the error by artificially creating the missing pipe.
-     */
-    if ((p_pipe == NULL) &&
-        ((pipe_id == NFC_HCI_DEFAULT_UICC_CONN_PIPE)  ||  (pipe_id == NFC_HCI_DEFAULT_ESE_CONN_PIPE)))
-    {
-       UINT8 host = (pipe_id == NFC_HCI_DEFAULT_UICC_CONN_PIPE) ? NFA_HCI_UICC_HOST : NFA_HCI_ESE_HOST;
-
-       NFA_TRACE_DEBUG1 ("nfa_hci_handle_dyn_pipe_pkt - Connectivity event received on pipe %02x which is closed.", pipe_id);
-       NFA_TRACE_DEBUG2 ("nfa_hci_handle_dyn_pipe_pkt - NXP WA: pipe %02x is going to be created (host %02x)", pipe_id, host);
-
-       tNFA_HCI_RESPONSE response = nfa_hciu_add_pipe_to_gate (pipe_id, NFA_HCI_CONNECTIVITY_GATE, host, NFA_HCI_CONNECTIVITY_GATE);
-       p_pipe = nfa_hciu_find_pipe_by_pid (pipe_id);
-    }
-#endif
-
     if (p_pipe == NULL)
     {
         /* Invalid pipe ID */
@@ -1756,7 +1737,7 @@ void nfa_hci_handle_dyn_pipe_pkt (UINT8 pipe_id, UINT8 *p_data, UINT16 data_len)
         nfa_hci_handle_connectivity_gate_pkt (p_data, data_len, p_pipe);
     }
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
-#ifdef GEMATO_SE_SUPPORT
+#ifdef GEMALTO_SE_SUPPORT
     else if (p_pipe->local_gate == NFC_HCI_DEFAULT_DEST_GATE)
     {
         /* Check if data packet is a command, response or event */

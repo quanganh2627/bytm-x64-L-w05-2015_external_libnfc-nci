@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1255,10 +1255,12 @@ void nfa_ee_nci_mode_set_rsp(tNFA_EE_MSG *p_data)
         NFA_TRACE_ERROR1 ("nfa_ee_nci_mode_set_rsp() Can not find cb for handle:0x%02x", p_rsp->nfcee_id);
         return;
     }
-
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    /* Do not update routing table on secure element enable/disable. */
+#else
     /* update routing table and vs on mode change */
     nfa_ee_start_timer();
-
+#endif
     if (p_rsp->status == NFA_STATUS_OK)
     {
 
@@ -1268,6 +1270,9 @@ void nfa_ee_nci_mode_set_rsp(tNFA_EE_MSG *p_data)
         }
         else
         {
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    /* Do not update routing table on secure element enable/disable. */
+#else
             if (p_cb->tech_switch_on | p_cb->tech_switch_off | p_cb->tech_battery_off |
                 p_cb->proto_switch_on| p_cb->proto_switch_off| p_cb->proto_battery_off |
                 p_cb->aid_entries)
@@ -1279,10 +1284,6 @@ void nfa_ee_nci_mode_set_rsp(tNFA_EE_MSG *p_data)
             }
             p_cb->tech_switch_on    = p_cb->tech_switch_off = p_cb->tech_battery_off    = 0;
             p_cb->proto_switch_on   = p_cb->proto_switch_off= p_cb->proto_battery_off   = 0;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
-            /*Do not clear the AID list, as it will sent again when EE will be reactivated.*/
-            /*p_cb->aid_entries       = 0;*/
-#else
             p_cb->aid_entries       = 0;
 #endif
             p_cb->ee_status = NFC_NFCEE_STATUS_INACTIVE;
@@ -1696,6 +1697,10 @@ tNFA_STATUS nfa_ee_route_add_one_ecb(tNFA_EE_ECB *p_cb, int max_len, BOOLEAN mor
             power_cfg |= NCI_ROUTE_PWR_STATE_SWITCH_OFF;
         if (p_cb->tech_battery_off & nfa_ee_tech_mask_list[xx])
             power_cfg |= NCI_ROUTE_PWR_STATE_BATT_OFF;
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        if (power_cfg != 0x00)
+            power_cfg |= NCI_ROUTE_PWR_STATE_SCREEN_OFF;
+#endif
         if (power_cfg)
         {
             *pp++   = NFC_ROUTE_TAG_TECH;
@@ -1719,6 +1724,10 @@ tNFA_STATUS nfa_ee_route_add_one_ecb(tNFA_EE_ECB *p_cb, int max_len, BOOLEAN mor
             power_cfg |= NCI_ROUTE_PWR_STATE_SWITCH_OFF;
         if (p_cb->proto_battery_off & nfa_ee_proto_mask_list[xx])
             power_cfg |= NCI_ROUTE_PWR_STATE_BATT_OFF;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        if (power_cfg != 0x00)
+            power_cfg |= NCI_ROUTE_PWR_STATE_SCREEN_OFF;
+#endif
         if (power_cfg)
         {
             *pp++   = NFC_ROUTE_TAG_PROTO;

@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -483,6 +483,28 @@ NFC_API extern tNFA_STATUS NFA_EeSendData (tNFA_HANDLE  ee_handle,
 *******************************************************************************/
 NFC_API extern tNFA_STATUS NFA_EeDisconnect (tNFA_HANDLE ee_handle);
 
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+/*******************************************************************************
+**
+** Function         NFA_AddEePowerState
+**
+** Description      This function is called to add power state in the
+**                  listen mode routing table in NFCC.
+**
+** Note:            If RF discovery is started, NFA_StopRfDiscovery()/NFA_RF_DISCOVERY_STOPPED_EVT
+**                  should happen before calling this function
+**
+** Note:            NFA_EeUpdateNow() should be called after last NFA-EE function
+**                  to change the listen mode routing is called.
+**
+** Returns          NFA_STATUS_OK if successfully initiated
+**                  NFA_STATUS_FAILED otherwise
+**                  NFA_STATUS_INVALID_PARAM If bad parameter
+**
+*******************************************************************************/
+tNFA_STATUS extern NFA_AddEePowerState(tNFA_HANDLE          ee_handle,
+                                tNFA_EE_PWR_STATE    power_state_mask);
+#endif
 
 #ifdef __cplusplus
 }

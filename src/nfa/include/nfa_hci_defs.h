@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@
 #define NFA_HCI_LOOP_BACK_GATE              0x04
 #define NFA_HCI_IDENTITY_MANAGEMENT_GATE    0x05
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
-#ifdef GEMATO_SE_SUPPORT
+#ifdef GEMALTO_SE_SUPPORT
 #define NFC_HCI_DEFAULT_DEST_GATE           0XF0
 #endif
 #endif

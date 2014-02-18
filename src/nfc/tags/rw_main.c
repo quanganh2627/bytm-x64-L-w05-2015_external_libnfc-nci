@@ -256,6 +256,9 @@ tNFC_STATUS RW_SetActivatedTagType (tNFC_ACTIVATE_DEVT *p_activate_params, tRW_C
         break;
 
     case NFC_PROTOCOL_ISO_DEP:     /* ISODEP/4A,4B- NFC-A or NFC-B */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    case NFC_PROTOCOL_T3BT:
+#endif
         if (  (p_activate_params->rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_B)
             ||(p_activate_params->rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A)  )
         {

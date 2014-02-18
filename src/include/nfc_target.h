@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -670,11 +670,7 @@
 
 /* Max number of NFCEE supported */
 #ifndef NFA_EE_MAX_EE_SUPPORTED
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
-#define NFA_EE_MAX_EE_SUPPORTED         4 //Wait for UICC Init complete.
-#else
 #define NFA_EE_MAX_EE_SUPPORTED         3           /* Modified for NFC-A until we add dynamic support */
-#endif
 #endif
 
 /* Maximum number of AID entries per target_handle  */

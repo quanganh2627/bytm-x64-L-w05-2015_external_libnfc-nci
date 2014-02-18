@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1042,6 +1042,11 @@ static void nfa_rw_handle_t4t_evt (tRW_EVENT event, tRW_DATA *p_rw_data)
 
         nfa_dm_act_conn_cback_notify(NFA_FORMAT_CPLT_EVT, &conn_evt_data);
         break;
+
+    case RW_T3BT_RAW_READ_CPLT_EVT:
+        nfa_rw_command_complete();
+        nfa_dm_act_conn_cback_notify(NFA_ACTIVATED_EVT, &conn_evt_data);
+        break;
 #endif
 
     case RW_T4T_NDEF_READ_EVT:              /* Segment of data received from type 4 tag */
@@ -1430,7 +1435,24 @@ static void nfa_rw_handle_i93_evt (tRW_EVENT event, tRW_DATA *p_rw_data)
         break;
     }
 }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+static void nfa_rw_handle_t3bt_evt (tRW_EVENT event, tRW_DATA *p_rw_data)
+{
+    //tNFC_ACTIVATE_DEVT *activate_ntf = (tNFC_ACTIVATE_DEVT*)nfa_dm_cb.p_activate_ntf;
+    NFA_TRACE_DEBUG0("nfa_rw_handle_t3bt_evt:");
 
+    switch (event)
+    {
+    case RW_T3BT_RAW_READ_CPLT_EVT:
+        nfa_rw_command_complete();
+        break;
+    default:
+        NFA_TRACE_DEBUG0("nfa_rw_handle_t3bt_evt: default event");
+        break;
+    }
+    nfa_dm_notify_activation_status(NFA_STATUS_OK, NULL);
+}
+#endif
 /*******************************************************************************
 **
 ** Function         nfa_rw_cback
@@ -1470,6 +1492,13 @@ static void nfa_rw_cback (tRW_EVENT event, tRW_DATA *p_rw_data)
         /* Handle ISO 15693 tag events */
         nfa_rw_handle_i93_evt(event, p_rw_data);
     }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    else if (event < RW_T3BT_MAX_EVT)
+    {
+        /* Handle ISO 14443-3B tag events */
+        nfa_rw_handle_t3bt_evt(event, p_rw_data);
+    }
+#endif
     else
     {
         NFA_TRACE_ERROR1("nfa_rw_cback: unhandled event=0x%02x", event);
@@ -2332,6 +2361,22 @@ static BOOLEAN nfa_rw_t3t_get_system_codes (tNFA_RW_MSG *p_data)
     return TRUE;
 }
 
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+static BOOLEAN nfa_rw_t3bt_get_pupi(tNFA_RW_MSG *p_data)
+{
+    tNFC_STATUS     status;
+
+    status = RW_T3BtGetPupiID();
+
+    if(status != NFC_STATUS_OK)
+    {
+        nfa_rw_command_complete();
+    }
+
+    return TRUE;
+}
+#endif
+
 /*******************************************************************************
 **
 ** Function         nfa_rw_i93_command
@@ -2552,7 +2597,11 @@ BOOLEAN nfa_rw_activate_ntf(tNFA_RW_MSG *p_data)
         if (  (p_activate_params->protocol != NFA_PROTOCOL_T1T)
             &&(p_activate_params->protocol != NFA_PROTOCOL_T2T)
             &&(p_activate_params->protocol != NFA_PROTOCOL_T3T)
-            &&(p_activate_params->protocol != NFC_PROTOCOL_15693)  )
+            &&(p_activate_params->protocol != NFC_PROTOCOL_15693)
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            &&(p_activate_params->protocol != NFA_PROTOCOL_T3BT)
+#endif
+           )
         {
             nfa_rw_cb.protocol = NFA_PROTOCOL_INVALID;
         }
@@ -2623,6 +2672,14 @@ BOOLEAN nfa_rw_activate_ntf(tNFA_RW_MSG *p_data)
         msg.op = NFA_RW_OP_T3T_GET_SYSTEM_CODES;
         nfa_rw_handle_op_req((tNFA_RW_MSG *)&msg);
         break;
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    case NFC_PROTOCOL_T3BT:
+        activate_notify = FALSE;                    /* Delay notifying upper layer of NFA_ACTIVATED_EVT until system codes are retrieved */
+        msg.op = NFA_RW_OP_T3BT_PUPI;
+        nfa_rw_handle_op_req((tNFA_RW_MSG *)&msg);
+        break;
+#endif
 
     case NFC_PROTOCOL_15693:
         /* Delay notifying upper layer of NFA_ACTIVATED_EVT to retrieve additional tag infomation */
@@ -2923,6 +2980,12 @@ BOOLEAN nfa_rw_handle_op_req (tNFA_RW_MSG *p_data)
         nfa_rw_i93_command (p_data);
         break;
 
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    case NFA_RW_OP_T3BT_PUPI:
+        nfa_rw_t3bt_get_pupi(p_data);
+        break;
+#endif
+
     default:
         NFA_TRACE_ERROR1("nfa_rw_handle_api: unhandled operation: %i", p_data->op_req.op);
         break;
@@ -3034,3 +3097,22 @@ void nfa_rw_command_complete(void)
     /* Restart presence_check timer */
     nfa_rw_check_start_presence_check_timer (NFA_RW_PRESENCE_CHECK_INTERVAL);
 }
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+void nfa_rw_update_pupi_id(UINT8 *p, UINT8 len)
+{
+    tNFC_ACTIVATE_DEVT *activate_ntf = (tNFC_ACTIVATE_DEVT*)nfa_dm_cb.p_activate_ntf;
+
+    NFA_TRACE_DEBUG0("nfa_rw_update_pupi_id:");
+    if(len != 0)
+    {
+        activate_ntf->rf_tech_param.param.pb.pupiid_len = len;
+        memcpy(activate_ntf->rf_tech_param.param.pb.pupiid, p, len);
+    }
+    else
+    {
+        NFA_TRACE_DEBUG1("nfa_rw_update_pupi_id: invalid resp_len=%d", len);
+    }
+
+}
+#endif

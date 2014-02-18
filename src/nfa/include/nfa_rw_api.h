@@ -739,6 +739,19 @@ NFC_API extern tNFA_STATUS NFA_RwI93GetSysInfo (UINT8 *p_uid);
 *******************************************************************************/
 NFC_API extern tNFA_STATUS NFA_RwI93GetMultiBlockSecurityStatus (UINT8  first_block_number,
                                                                  UINT16 number_blocks);
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+/*******************************************************************************
+**
+** Function         NFA_SetReconnectState
+**
+** Description:
+**      This function enable/disable p2p prio logic if re-connect is in progress
+**
+** Returns:
+**      void
+*******************************************************************************/
+NFC_API extern void NFA_SetReconnectState (BOOLEAN flag);
+#endif
 
 #ifdef __cplusplus
 }
