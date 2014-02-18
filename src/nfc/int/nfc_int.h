@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -296,6 +296,9 @@ NFC_API extern void nfc_ncif_proc_reset_rsp (UINT8 *p, BOOLEAN is_ntf);
 NFC_API extern void nfc_ncif_proc_init_rsp (BT_HDR *p_msg);
 NFC_API extern void nfc_ncif_proc_get_config_rsp (BT_HDR *p_msg);
 NFC_API extern void nfc_ncif_proc_data (BT_HDR *p_msg);
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+NFC_API extern void nfc_ncif_store_FWVersion(UINT8 * p_buf);
+#endif
 
 #if (NFC_RW_ONLY == FALSE)
 NFC_API extern void nfc_ncif_proc_rf_field_ntf (UINT8 rf_status);

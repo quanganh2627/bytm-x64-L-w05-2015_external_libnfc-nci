@@ -468,6 +468,22 @@ void nfa_hci_proc_nfcc_power_mode (UINT8 nfcc_power_mode)
 *******************************************************************************/
 void nfa_hci_dh_startup_complete (void)
 {
+//NFC-INIT MACH
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    if(nfa_hci_cb.ee_disable_disc)
+    {
+        if(nfa_hci_cb.hci_state == NFA_HCI_STATE_STARTUP &&
+                nfa_hci_cb.num_nfcee >= 1)
+        {
+            NFA_TRACE_DEBUG0 ("nfa_hci_dh_startup_complete");
+            nfa_hci_cb.w4_hci_netwk_init = FALSE;
+            /* Received EE DISC REQ Ntf(s) */
+            nfa_hciu_send_get_param_cmd (NFA_HCI_ADMIN_PIPE, NFA_HCI_HOST_LIST_INDEX);
+        }
+    }
+#endif
+//NFC_INIT MACH
+
     if (nfa_hci_cb.w4_hci_netwk_init)
     {
         if (nfa_hci_cb.hci_state == NFA_HCI_STATE_STARTUP)
@@ -795,13 +811,21 @@ static void nfa_hci_conn_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p
     /* a single response, we can go back to idle state                       */
     if (  (nfa_hci_cb.hci_state == NFA_HCI_STATE_WAIT_RSP)
         &&((nfa_hci_cb.type == NFA_HCI_RESPONSE_TYPE) || (nfa_hci_cb.w4_rsp_evt && (nfa_hci_cb.type == NFA_HCI_EVENT_TYPE)
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
-        && (nfa_hci_cb.inst != NFA_HCI_EVT_WTX)
-#endif
         )))
     {
         nfa_sys_stop_timer (&nfa_hci_cb.timer);
-        nfa_hci_cb.hci_state  = NFA_HCI_STATE_IDLE;
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        if(nfa_hci_cb.inst == NFA_HCI_EVT_WTX)
+        {
+            if(nfa_hci_cb.w4_rsp_evt == TRUE)
+            {
+                const INT32 rsp_timeout = 3000; //3-sec
+                nfa_sys_start_timer (&nfa_hci_cb.timer, NFA_HCI_RSP_TIMEOUT_EVT, rsp_timeout);
+            }
+        }
+        else
+#endif
+            nfa_hci_cb.hci_state  = NFA_HCI_STATE_IDLE;
     }
 
     switch (pipe)

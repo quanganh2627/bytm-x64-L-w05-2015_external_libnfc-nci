@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -256,6 +256,17 @@ typedef struct
     UINT8                   *p_param_tlvs;  /* TLV                  */
 } tNFC_GET_CONFIG_REVT;
 
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+/* This data type is for FW Version */
+typedef struct
+{
+    UINT8           rom_code_version;    /* ROM code Version  */
+    UINT8           major_version;       /* Major Version */
+    UINT8           minor_version;       /* Minor Version  */
+} tNFC_FW_VERSION;
+#endif
+
+
 /* the data type associated with NFC_NFCEE_DISCOVER_REVT */
 typedef struct
 {
@@ -367,6 +378,7 @@ typedef UINT8 tNFC_RF_TECH;
 #define NFC_PROTOCOL_NFC_DEP    NCI_PROTOCOL_NFC_DEP  /* NFCDEP/LLCP - NFC-A or NFC-F       */
 #if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NFC_PROTOCOL_MIFARE     NCI_PROTOCOL_MIFARE
+#define NFC_PROTOCOL_T3BT       NCI_PROTOCOL_T3BT
 #endif
 #define NFC_PROTOCOL_B_PRIME    NCI_PROTOCOL_B_PRIME
 #define NFC_PROTOCOL_15693      NCI_PROTOCOL_15693
@@ -560,11 +572,18 @@ typedef tNFC_STATUS tNFC_START_DEVT;
 typedef tNCI_RF_PA_PARAMS tNFC_RF_PA_PARAMS;
 #define NFC_MAX_SENSB_RES_LEN         NCI_MAX_SENSB_RES_LEN
 #define NFC_NFCID0_MAX_LEN          4
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NFC_PUPIID_MAX_LEN          8
+#endif
 typedef struct
 {
     UINT8       sensb_res_len;/* Length of SENSB_RES Response (Byte 2 - Byte 12 or 13) Available after Technology Detection */
     UINT8       sensb_res[NFC_MAX_SENSB_RES_LEN]; /* SENSB_RES Response (ATQ) */
     UINT8       nfcid0[NFC_NFCID0_MAX_LEN];
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    UINT8       pupiid_len;
+    UINT8       pupiid[NFC_PUPIID_MAX_LEN];
+#endif
 } tNFC_RF_PB_PARAMS;
 
 #define NFC_MAX_SENSF_RES_LEN       NCI_MAX_SENSF_RES_LEN
@@ -1279,6 +1298,20 @@ NFC_API extern tNFC_STATUS NFC_TestLoopback(BT_HDR *p_data);
 **
 *******************************************************************************/
 NFC_API extern UINT8 NFC_SetTraceLevel (UINT8 new_level);
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+/*******************************************************************************
+**
+** Function         nfc_ncif_getFWVersion
+**
+** Description      This function sets the trace level for NFC.  If called with
+**                  a value of 0xFF, it simply returns the current trace level.
+**
+** Returns          The new or current trace level
+**
+*******************************************************************************/
+NFC_API extern tNFC_FW_VERSION nfc_ncif_getFWVersion();
+#endif
 
 #ifdef __cplusplus
 }

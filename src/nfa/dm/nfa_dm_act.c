@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -384,6 +384,10 @@ static void nfa_dm_nfc_response_cback (tNFC_RESPONSE_EVT event, tNFC_RESPONSE *p
         break;
 
     case NFC_SET_ROUTING_REVT:                   /* Configure Routing response */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        dm_cback_data.rf_field.status          = p_data->status;
+        (*nfa_dm_cb.p_dm_cback) (NFA_DM_SET_ROUTE_CONFIG_REVT, &dm_cback_data);
+#endif
         break;
 
     case NFC_GET_ROUTING_REVT:                   /* Retrieve Routing response */
@@ -790,7 +794,11 @@ BOOLEAN nfa_dm_act_deactivate (tNFA_DM_MSG *p_data)
                 deact_type = NFA_DEACTIVATE_TYPE_SLEEP;
             }
         }
-        if (nfa_dm_cb.disc_cb.disc_state == NFA_DM_RFST_W4_ALL_DISCOVERIES)
+        if ((nfa_dm_cb.disc_cb.disc_state == NFA_DM_RFST_W4_ALL_DISCOVERIES)
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            ||(nfa_dm_cb.disc_cb.activated_protocol == NFA_PROTOCOL_T3BT)
+#endif
+           )
         {
             /* Only deactivate to IDLE is allowed in this state. */
             deact_type = NFA_DEACTIVATE_TYPE_IDLE;
@@ -1703,6 +1711,7 @@ static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_KOVIO)
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_MIFARE)
+                     ||(nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T3BT)
 #endif
                     )
             {
@@ -1868,6 +1877,19 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
         {
             nfcid_len = NFC_NFCID0_MAX_LEN;
             p_nfcid   = p_tech_params->param.pb.nfcid0;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            if(nfa_dm_cb.disc_cb.activated_protocol == NFC_PROTOCOL_T3BT)
+            {
+                if(p_tech_params->param.pb.pupiid_len != 0)
+                {
+                    tNFC_ACTIVATE_DEVT *activate_ntf = (tNFC_ACTIVATE_DEVT*)nfa_dm_cb.p_activate_ntf;
+                    p_nfcid = activate_ntf->rf_tech_param.param.pb.pupiid;
+                    nfcid_len = activate_ntf->rf_tech_param.param.pb.pupiid_len;
+                    NFA_TRACE_DEBUG1 ("nfa_dm_notify_activation_status (): update pupi_len=%x", nfcid_len);
+                    memcpy (evt_data.activated.activate_ntf.rf_tech_param.param.pb.pupiid, p_nfcid, nfcid_len);
+                }
+            }
+#endif
         }
         else if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_F)
         {

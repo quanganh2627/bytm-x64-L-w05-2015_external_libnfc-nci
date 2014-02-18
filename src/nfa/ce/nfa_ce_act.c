@@ -436,7 +436,13 @@ tNFA_STATUS nfa_ce_start_listening (void)
                     p_cb->listen_info[listen_info_idx].rf_disc_handle = disc_handle;
             }
 #if (NFC_NFCEE_INCLUDED == TRUE)
-            else if (p_cb->listen_info[listen_info_idx].flags & NFA_CE_LISTEN_INFO_UICC)
+            else if (p_cb->listen_info[listen_info_idx].flags &
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                    (NFA_CE_LISTEN_INFO_UICC | NFA_CE_LISTEN_INFO_ESE)
+#else
+                    NFA_CE_LISTEN_INFO_UICC
+#endif
+                    )
             {
                 listen_mask = 0;
                 if (nfa_ee_is_active (p_cb->listen_info[listen_info_idx].ee_handle))
@@ -487,8 +493,13 @@ tNFA_STATUS nfa_ce_start_listening (void)
                 }
                 else
                 {
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                    NFA_TRACE_ERROR1 ("UICC/ESE[0x%x] is not activated",
+                                       p_cb->listen_info[listen_info_idx].ee_handle);
+#else
                     NFA_TRACE_ERROR1 ("UICC[0x%x] is not activated",
                                        p_cb->listen_info[listen_info_idx].ee_handle);
+#endif
                 }
             }
 #endif
@@ -567,6 +578,14 @@ void nfa_ce_remove_listen_info_entry (UINT8 listen_info_idx, BOOLEAN notify_app)
             conn_evt.status = NFA_STATUS_OK;
             (*p_cb->listen_info[listen_info_idx].p_conn_cback) (NFA_CE_UICC_LISTEN_CONFIGURED_EVT, &conn_evt);
         }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        else if (p_cb->listen_info[listen_info_idx].flags & NFA_CE_LISTEN_INFO_ESE)
+        {
+            conn_evt.status = NFA_STATUS_OK;
+            (*p_cb->listen_info[listen_info_idx].p_conn_cback) (NFA_CE_ESE_LISTEN_CONFIGURED_EVT, &conn_evt);
+        }
+#endif
+
 #endif
         else
         {
@@ -784,6 +803,17 @@ BOOLEAN nfa_ce_activate_ntf (tNFA_CE_MSG *p_ce_msg)
     if (p_cb->activation_params.intf_param.type == NCI_INTERFACE_UICC_DIRECT || p_cb->activation_params.intf_param.type == NCI_INTERFACE_ESE_DIRECT )
     {
         memcpy (&(conn_evt.activated.activate_ntf), &p_cb->activation_params, sizeof (tNFC_ACTIVATE_DEVT));
+        for (i=0; i<NFA_CE_LISTEN_INFO_IDX_INVALID; i++)
+        {
+            if (p_cb->listen_info[i].flags & NFA_CE_LISTEN_INFO_UICC)
+            {
+                listen_info_idx = i;
+                NFA_TRACE_DEBUG1 ("listen_info found for this activation. listen_info_idx=%d", listen_info_idx);
+                /* Get CONN_CBACK for this activation */
+                p_cb->p_active_conn_cback = p_cb->listen_info[listen_info_idx].p_conn_cback;
+                break;
+            }
+        }
 
         (*p_cb->p_active_conn_cback) (NFA_ACTIVATED_EVT, &conn_evt);
     }
@@ -854,7 +884,13 @@ BOOLEAN nfa_ce_activate_ntf (tNFA_CE_MSG *p_ce_msg)
 
 #if (NFC_NFCEE_INCLUDED == TRUE)
                 /* Check if entry is for ISO_DEP UICC */
-                if (p_cb->listen_info[i].flags & NFA_CE_LISTEN_INFO_UICC)
+                if (p_cb->listen_info[i].flags &
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                      (NFA_CE_LISTEN_INFO_UICC | NFA_CE_LISTEN_INFO_ESE)
+#else
+                      NFA_CE_LISTEN_INFO_UICC
+#endif
+                )
                 {
                     if (  (  (p_cb->activation_params.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A)
                            &&(p_cb->listen_info[i].tech_proto_mask & NFA_DM_DISC_MASK_LA_ISO_DEP)  )
@@ -882,7 +918,13 @@ BOOLEAN nfa_ce_activate_ntf (tNFA_CE_MSG *p_ce_msg)
         for (i=0; i<NFA_CE_LISTEN_INFO_IDX_INVALID; i++)
         {
             if (  (p_cb->listen_info[i].flags & NFA_CE_LISTEN_INFO_IN_USE)
-                &&(p_cb->listen_info[i].flags & NFA_CE_LISTEN_INFO_UICC))
+                &&(p_cb->listen_info[i].flags &
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                        (NFA_CE_LISTEN_INFO_UICC | NFA_CE_LISTEN_INFO_ESE)
+#else
+                        NFA_CE_LISTEN_INFO_UICC
+#endif
+                ))
             {
                 listen_info_idx = i;
                 break;
@@ -905,7 +947,13 @@ BOOLEAN nfa_ce_activate_ntf (tNFA_CE_MSG *p_ce_msg)
     p_cb->idx_cur_active = listen_info_idx;
 
     if (  (p_cb->idx_cur_active == NFA_CE_LISTEN_INFO_IDX_NDEF)
-        ||(p_cb->listen_info[p_cb->idx_cur_active].flags & NFA_CE_LISTEN_INFO_UICC))
+        ||(p_cb->listen_info[p_cb->idx_cur_active].flags &
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                        (NFA_CE_LISTEN_INFO_UICC | NFA_CE_LISTEN_INFO_ESE)
+#else
+                        NFA_CE_LISTEN_INFO_UICC
+#endif
+        ))
     {
         memcpy (&(conn_evt.activated.activate_ntf), &p_cb->activation_params, sizeof (tNFC_ACTIVATE_DEVT));
 
@@ -981,7 +1029,13 @@ BOOLEAN nfa_ce_deactivate_ntf (tNFA_CE_MSG *p_ce_msg)
     {
         if (p_cb->listen_info[i].flags & NFA_CE_LISTEN_INFO_IN_USE)
         {
-            if (  (p_cb->listen_info[i].flags & NFA_CE_LISTEN_INFO_UICC)
+            if (  (p_cb->listen_info[i].flags &
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                        (NFA_CE_LISTEN_INFO_UICC | NFA_CE_LISTEN_INFO_ESE)
+#else
+                        NFA_CE_LISTEN_INFO_UICC
+#endif
+            )
                 &&(i == p_cb->idx_cur_active)  )
             {
                 conn_evt.deactivated.type =  deact_type;
@@ -1184,7 +1238,11 @@ BOOLEAN nfa_ce_api_reg_listen (tNFA_CE_MSG *p_ce_msg)
     UINT8 i;
     UINT8 listen_info_idx = NFA_CE_LISTEN_INFO_IDX_INVALID;
 
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    NFA_TRACE_DEBUG1 ("Registering UICC/ESE/Felica/Type-4 tag listener. Type=%i", p_ce_msg->reg_listen.listen_type);
+#else
     NFA_TRACE_DEBUG1 ("Registering UICC/Felica/Type-4 tag listener. Type=%i", p_ce_msg->reg_listen.listen_type);
+#endif
 
     /* Look for available entry in listen_info table                                        */
     /* - If registering UICC listen, make sure there isn't another entry for the ee_handle  */
@@ -1202,6 +1260,19 @@ BOOLEAN nfa_ce_api_reg_listen (tNFA_CE_MSG *p_ce_msg)
             nfa_dm_conn_cback_event_notify (NFA_CE_UICC_LISTEN_CONFIGURED_EVT, &conn_evt);
             return TRUE;
         }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        else if (  (p_ce_msg->reg_listen.listen_type == NFA_CE_REG_TYPE_ESE)
+            &&(p_cb->listen_info[i].flags & NFA_CE_LISTEN_INFO_IN_USE)
+            &&(p_cb->listen_info[i].flags & NFA_CE_LISTEN_INFO_ESE)
+            &&(p_cb->listen_info[i].ee_handle == p_ce_msg->reg_listen.ee_handle)  )
+        {
+
+            NFA_TRACE_ERROR1 ("ESE (0x%x) listening already specified", p_ce_msg->reg_listen.ee_handle);
+            conn_evt.status = NFA_STATUS_FAILED;
+            nfa_dm_conn_cback_event_notify (NFA_CE_ESE_LISTEN_CONFIGURED_EVT, &conn_evt);
+            return TRUE;
+        }
+#endif
         /* If this is a free entry, and we haven't found one yet, remember it */
         else if (  (!(p_cb->listen_info[i].flags & NFA_CE_LISTEN_INFO_IN_USE))
                  &&(listen_info_idx == NFA_CE_LISTEN_INFO_IDX_INVALID)  )
@@ -1220,6 +1291,13 @@ BOOLEAN nfa_ce_api_reg_listen (tNFA_CE_MSG *p_ce_msg)
             conn_evt.status = NFA_STATUS_FAILED;
             nfa_dm_conn_cback_event_notify (NFA_CE_UICC_LISTEN_CONFIGURED_EVT, &conn_evt);
         }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        else if (p_ce_msg->reg_listen.listen_type == NFA_CE_REG_TYPE_ESE)
+        {
+            conn_evt.status = NFA_STATUS_FAILED;
+            nfa_dm_conn_cback_event_notify (NFA_CE_ESE_LISTEN_CONFIGURED_EVT, &conn_evt);
+        }
+#endif
         else
         {
             /* Notify application */
@@ -1277,6 +1355,24 @@ BOOLEAN nfa_ce_api_reg_listen (tNFA_CE_MSG *p_ce_msg)
 
 #if (NFC_NFCEE_INCLUDED == TRUE)
         case NFA_CE_REG_TYPE_UICC:
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+
+            for (i=1; i<NFA_CE_LISTEN_INFO_MAX; i++)
+            {
+                UINT8 tech = p_cb->listen_info[listen_info_idx].tech_mask &
+                        p_ce_msg->reg_listen.tech_mask;
+                if( (p_cb->listen_info[listen_info_idx].flags & NFA_CE_LISTEN_INFO_ESE) &&
+                        (tech)
+                       )
+                {
+                    NFA_TRACE_ERROR1 ("NFA_CE: Technology %0x listening already specified for ESE", tech);
+                    conn_evt.status = NFA_STATUS_FAILED;
+                    nfa_dm_conn_cback_event_notify (NFA_CE_UICC_LISTEN_CONFIGURED_EVT, &conn_evt);
+                    return TRUE;
+                }
+            }
+#endif
             p_cb->listen_info[listen_info_idx].flags |= NFA_CE_LISTEN_INFO_UICC;
             p_cb->listen_info[listen_info_idx].p_conn_cback = &nfa_dm_conn_cback_event_notify;
 
@@ -1284,6 +1380,34 @@ BOOLEAN nfa_ce_api_reg_listen (tNFA_CE_MSG *p_ce_msg)
             p_cb->listen_info[listen_info_idx].ee_handle = p_ce_msg->reg_listen.ee_handle;
             p_cb->listen_info[listen_info_idx].tech_mask = p_ce_msg->reg_listen.tech_mask;
             break;
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        case NFA_CE_REG_TYPE_ESE:
+
+            for (i=1; i<NFA_CE_LISTEN_INFO_MAX; i++)
+            {
+                UINT8 tech = p_cb->listen_info[listen_info_idx].tech_mask &
+                        p_ce_msg->reg_listen.tech_mask;
+                if( (p_cb->listen_info[listen_info_idx].flags & NFA_CE_LISTEN_INFO_UICC) &&
+                        (tech)
+                       )
+                {
+                    NFA_TRACE_ERROR1 ("NFA_CE: Technology %0x listening already specified for UICC", tech);
+                    conn_evt.status = NFA_STATUS_FAILED;
+                    nfa_dm_conn_cback_event_notify (NFA_CE_ESE_LISTEN_CONFIGURED_EVT, &conn_evt);
+                    return TRUE;
+                }
+            }
+
+            p_cb->listen_info[listen_info_idx].flags |= NFA_CE_LISTEN_INFO_ESE;
+            p_cb->listen_info[listen_info_idx].p_conn_cback = &nfa_dm_conn_cback_event_notify;
+
+            /* Store EE handle and Tech */
+            p_cb->listen_info[listen_info_idx].ee_handle = p_ce_msg->reg_listen.ee_handle;
+            p_cb->listen_info[listen_info_idx].tech_mask = p_ce_msg->reg_listen.tech_mask;
+            break;
+#endif
+
 #endif
         }
     }
@@ -1300,6 +1424,12 @@ BOOLEAN nfa_ce_api_reg_listen (tNFA_CE_MSG *p_ce_msg)
     {
         (*p_cb->listen_info[listen_info_idx].p_conn_cback) (NFA_CE_UICC_LISTEN_CONFIGURED_EVT, &conn_evt);
     }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    else if (p_ce_msg->reg_listen.listen_type == NFA_CE_REG_TYPE_ESE)
+    {
+        (*p_cb->listen_info[listen_info_idx].p_conn_cback) (NFA_CE_ESE_LISTEN_CONFIGURED_EVT, &conn_evt);
+    }
+#endif
     else
     {
         conn_evt.ce_registered.handle = NFA_HANDLE_GROUP_CE | listen_info_idx;
@@ -1326,14 +1456,26 @@ BOOLEAN nfa_ce_api_dereg_listen (tNFA_CE_MSG *p_ce_msg)
     tNFA_CONN_EVT_DATA conn_evt;
 
 #if (NFC_NFCEE_INCLUDED == TRUE)
-    /* Check if deregistering UICC , or virtual secure element listen */
-    if (p_ce_msg->dereg_listen.listen_info == NFA_CE_LISTEN_INFO_UICC)
+    /* Check if deregistering UICC/ESE , or virtual secure element listen */
+    if (p_ce_msg->dereg_listen.listen_info
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                        & (NFA_CE_LISTEN_INFO_UICC | NFA_CE_LISTEN_INFO_ESE)
+#else
+                        == NFA_CE_LISTEN_INFO_UICC
+#endif
+    )
     {
         /* Deregistering UICC listen. Look for listen_info for this UICC ee handle */
         for (listen_info_idx = 0; listen_info_idx < NFA_CE_LISTEN_INFO_MAX; listen_info_idx++)
         {
             if (  (p_cb->listen_info[listen_info_idx].flags & NFA_CE_LISTEN_INFO_IN_USE)
-                &&(p_cb->listen_info[listen_info_idx].flags & NFA_CE_LISTEN_INFO_UICC)
+                &&(p_cb->listen_info[listen_info_idx].flags &
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+                        (NFA_CE_LISTEN_INFO_UICC | NFA_CE_LISTEN_INFO_ESE)
+#else
+                        NFA_CE_LISTEN_INFO_UICC
+#endif
+                )
                 &&(p_cb->listen_info[listen_info_idx].ee_handle == p_ce_msg->dereg_listen.handle)  )
             {
                 /* UICC is in not idle state */
@@ -1362,9 +1504,24 @@ BOOLEAN nfa_ce_api_dereg_listen (tNFA_CE_MSG *p_ce_msg)
 
         if (listen_info_idx == NFA_CE_LISTEN_INFO_MAX)
         {
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            NFA_TRACE_ERROR0 ("nfa_ce_api_dereg_listen (): cannot find listen_info for UICC/ESE");
+#else
             NFA_TRACE_ERROR0 ("nfa_ce_api_dereg_listen (): cannot find listen_info for UICC");
+#endif
             conn_evt.status = NFA_STATUS_INVALID_PARAM;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            if(p_ce_msg->dereg_listen.listen_info & NFA_CE_LISTEN_INFO_UICC )
+            {
+                nfa_dm_conn_cback_event_notify (NFA_CE_UICC_LISTEN_CONFIGURED_EVT, &conn_evt);
+            }
+            else if(p_ce_msg->dereg_listen.listen_info & NFA_CE_LISTEN_INFO_ESE)
+            {
+                nfa_dm_conn_cback_event_notify (NFA_CE_ESE_LISTEN_CONFIGURED_EVT, &conn_evt);
+            }
+#else
             nfa_dm_conn_cback_event_notify (NFA_CE_UICC_LISTEN_CONFIGURED_EVT, &conn_evt);
+#endif
         }
     }
     else

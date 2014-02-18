@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -144,6 +144,7 @@ typedef UINT8 tNFA_TECHNOLOGY_MASK;
 #define NFA_PROTOCOL_KOVIO      NFC_PROTOCOL_KOVIO
 #if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NFA_PROTOCOL_MIFARE     NFC_PROTOCOL_MIFARE
+#define NFA_PROTOCOL_T3BT       NFC_PROTOCOL_T3BT
 #endif
 #define NFA_PROTOCOL_INVALID    0xFF
 #define NFA_MAX_NUM_PROTOCOLS   8
@@ -169,6 +170,7 @@ typedef UINT8 tNFA_PROTOCOL_MASK;
 #define NFA_DM_NFCC_TRANSPORT_ERR_EVT   7   /* NCI Tranport error               */
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NFA_DM_EMVCO_PCD_COLLISION_EVT  8   /* Collision event in case of EMV-CO Profile (Nxp)*/
+#define NFA_DM_SET_ROUTE_CONFIG_REVT    9   /* Status of EE Route config CMD (Nxp)*/
 
 /* Reader over SWP Events*/
 #define NFA_RD_SWP_READER_REQUESTED     0
@@ -289,6 +291,9 @@ typedef void (tNFA_DM_CBACK) (UINT8 event, tNFA_DM_CBACK_DATA *p_data);
 #define NFA_LISTEN_DISABLED_EVT                 37  /* Listening disabled event                     */
 #define NFA_P2P_PAUSED_EVT                      38  /* P2P services paused event                    */
 #define NFA_P2P_RESUMED_EVT                     39  /* P2P services resumed event                   */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define NFA_CE_ESE_LISTEN_CONFIGURED_EVT        40  /* ESE Listen configured                        */
+#endif
 
 /* NFC deactivation type */
 #define NFA_DEACTIVATE_TYPE_IDLE        NFC_DEACTIVATE_TYPE_IDLE

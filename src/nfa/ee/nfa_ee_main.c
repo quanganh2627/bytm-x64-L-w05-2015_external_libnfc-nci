@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -673,6 +673,15 @@ BOOLEAN nfa_ee_evt_hdlr (BT_HDR *p_msg)
         nfa_ee_sm_st_2_str (nfa_ee_cb.em_state), nfa_ee_cb.em_state);
 #else
     NFA_TRACE_DEBUG2 ("nfa_ee_evt_hdlr (): Event 0x%02x, State: %d", p_evt_data->hdr.event, nfa_ee_cb.em_state);
+#endif
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    /*This is required to receive Reader Over SWP event*/
+    if(p_evt_data->hdr.event == NFA_EE_NCI_DISC_NTF_EVT)
+    {
+        NFA_TRACE_DEBUG0("recived dis_ntf; stopping timer");
+        nfa_sys_stop_timer(&nfa_ee_cb.discv_timer);
+    }
 #endif
 
     switch (nfa_ee_cb.em_state)

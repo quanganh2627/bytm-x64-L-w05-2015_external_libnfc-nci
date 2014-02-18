@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,8 +61,10 @@ int GetNumValue(const char* name, void* p_value, unsigned long len);
 #define NAME_SCREEN_OFF_POWER_STATE     "SCREEN_OFF_POWER_STATE"
 #define NAME_PREINIT_DSP_CFG            "PREINIT_DSP_CFG"
 #define NAME_DTA_START_CFG              "DTA_START_CFG"
+#if(NFC_NXP_NOT_OPEN_INCLUDED != TRUE)
 #define NAME_TRANSPORT_DRIVER           "TRANSPORT_DRIVER"
 #define NAME_POWER_CONTROL_DRIVER       "POWER_CONTROL_DRIVER"
+#endif
 #define NAME_PROTOCOL_TRACE_LEVEL       "PROTOCOL_TRACE_LEVEL"
 #define NAME_UART_PORT                  "UART_PORT"
 #define NAME_UART_BAUD                  "UART_BAUD"
