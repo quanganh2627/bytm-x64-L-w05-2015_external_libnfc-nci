@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright(C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,6 +54,9 @@
 #define RW_T3T_FIRST_EVT    0x60
 #define RW_T4T_FIRST_EVT    0x80
 #define RW_I93_FIRST_EVT    0xA0
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#define RW_T3BT_FIRST_EVT   0xB0
+#endif
 
 enum
 {
@@ -141,7 +144,13 @@ enum
     RW_I93_PRESENCE_CHECK_EVT,                  /* Response to RW_I93PresenceCheck    */
     RW_I93_RAW_FRAME_EVT,                       /* Response of raw frame sent         */
     RW_I93_INTF_ERROR_EVT,                      /* RF Interface error event           */
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    RW_I93_MAX_EVT,
+    RW_T3BT_RAW_READ_CPLT_EVT,
+    RW_T3BT_MAX_EVT
+#else
     RW_I93_MAX_EVT
+#endif
 };
 
 #define RW_RAW_FRAME_EVT     0xFF
@@ -1337,5 +1346,9 @@ NFC_API extern tNFC_STATUS RW_SetActivatedTagType (tNFC_ACTIVATE_DEVT *p_activat
 **
 *******************************************************************************/
 NFC_API extern UINT8 RW_SetTraceLevel (UINT8 new_level);
+
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+NFC_API extern tNFC_STATUS RW_T3BtGetPupiID();
+#endif
 
 #endif /* RW_API_H */

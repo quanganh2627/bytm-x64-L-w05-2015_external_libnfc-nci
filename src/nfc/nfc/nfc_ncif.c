@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright(C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,6 +72,10 @@ static const UINT8 nfc_mpl_code_to_size[] =
 #define NFC_PB_ATTRIB_REQ_FIXED_BYTES   1
 #define NFC_LB_ATTRIB_REQ_FIXED_BYTES   8
 
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+// Global Structure varibale for FW Version
+static tNFC_FW_VERSION nfc_fw_version;
+#endif
 
 /*******************************************************************************
 **
@@ -357,7 +361,10 @@ void nfc_ncif_check_cmd_queue (BT_HDR *p_buf)
         if ((nfc_cb.nci_cmd_xmit_q.count) || (nfc_cb.nci_cmd_window == 0))
         {
             GKI_enqueue (&nfc_cb.nci_cmd_xmit_q, p_buf);
-            p_buf = NULL;
+            if (p_buf != NULL) {
+                NFC_TRACE_DEBUG0("nfc_ncif_check_cmd_queue : making p_buf NULL.");
+                p_buf = NULL;
+            }
         }
     }
 
@@ -488,7 +495,10 @@ void nfc_ncif_send_cmd (BT_HDR *p_buf)
             {
                 NFC_TRACE_DEBUG0 ("NFC recovery is in progress, storing outgoing packets.");
                 GKI_enqueue (&nfc_cb.nci_cmd_recov_xmit_q, p_buf);
-                p_buf = NULL;
+                if (p_buf != NULL) {
+                    NFC_TRACE_DEBUG0("nfc_ncif_send_cmd : making p_buf NULL.");
+                    p_buf = NULL;
+                }
                 return;
             }
         }
@@ -958,6 +968,12 @@ void nfc_ncif_proc_activate (UINT8 *p, UINT8 len)
 
     if (evt_data.activate.protocol == NCI_PROTOCOL_18092_ACTIVE)
         evt_data.activate.protocol = NCI_PROTOCOL_NFC_DEP;
+
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    if ((evt_data.activate.protocol == NCI_PROTOCOL_UNKNOWN) &&
+        (p_intf->type == NCI_INTERFACE_FRAME))
+            evt_data.activate.protocol = NCI_PROTOCOL_T3BT;
+#endif
 
     evt_data.activate.rf_tech_param.mode    = *p++;
     buff_size                               = *p++;
@@ -1634,6 +1650,9 @@ void nfc_ncif_proc_init_rsp (BT_HDR *p_msg)
     status   = *(p + NCI_MSG_HDR_SIZE);
     if (status == NCI_STATUS_OK)
     {
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        nfc_ncif_store_FWVersion(p);
+#endif
         p_cb->id            = NFC_RF_CONN_ID;
         p_cb->act_protocol  = NCI_PROTOCOL_UNKNOWN;
 
@@ -1649,6 +1668,41 @@ void nfc_ncif_proc_init_rsp (BT_HDR *p_msg)
     }
 }
 
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+/*******************************************************************************
+**
+** Function         nfc_ncif_store_FWVersion
+**
+** Description      This function is called to fill the structure with FW Version
+**
+** Returns          void
+**
+*******************************************************************************/
+void nfc_ncif_store_FWVersion(UINT8 * p_buf)
+{
+    int len = p_buf[2] + 2; /*include 2 byte header*/
+    memset(&nfc_fw_version, 0, sizeof(nfc_fw_version));
+    nfc_fw_version.rom_code_version = p_buf[len-2];
+    nfc_fw_version.major_version = p_buf[len-1];
+    nfc_fw_version.minor_version = p_buf[len];
+    NFC_TRACE_DEBUG3("FW Version: %x.%x.%x", nfc_fw_version.rom_code_version,
+                      nfc_fw_version.major_version, nfc_fw_version.minor_version);
+}
+
+/*******************************************************************************
+**
+** Function         nfc_ncif_getFWVersion
+**
+** Description      This function is called to fet the FW Version
+**
+** Returns          tNFC_FW_VERSION
+**
+*******************************************************************************/
+tNFC_FW_VERSION nfc_ncif_getFWVersion()
+{
+  return nfc_fw_version;
+}
+#endif
 /*******************************************************************************
 **
 ** Function         nfc_ncif_proc_get_config_rsp
