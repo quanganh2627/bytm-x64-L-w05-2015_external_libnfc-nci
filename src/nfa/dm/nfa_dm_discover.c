@@ -88,6 +88,7 @@ typedef struct nfa_dm_p2p_prio_logic
     UINT8            isodep_detected; /*flag to check if ISO-DEP is detected */
     UINT8            timer_expired;   /*flag to check whether timer is expired  */
     TIMER_LIST_ENT   timer_list; /*timer structure pointer */
+    UINT8            first_tech_mode;
 }nfa_dm_p2p_prio_logic_t;
 
 static nfa_dm_p2p_prio_logic_t p2p_prio_logic_data;
@@ -3189,10 +3190,28 @@ BOOLEAN nfa_dm_p2p_prio_logic(UINT8 event, UINT8 *p, UINT8 ntf_rsp)
         {
             memset(&p2p_prio_logic_data, 0x00, sizeof(nfa_dm_p2p_prio_logic_t));
             p2p_prio_logic_data.isodep_detected = 1;
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            p2p_prio_logic_data.first_tech_mode = tech_mode;
+#endif
             NFA_TRACE_DEBUG0 ("ISO-DEP Detected First Time  Resume the Polling Loop");
             nci_snd_deactivate_cmd(NFA_DEACTIVATE_TYPE_DISCOVERY);
             return FALSE;
         }
+
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        else if(event == NCI_MSG_RF_INTF_ACTIVATED &&
+                protocol == NCI_PROTOCOL_ISO_DEP &&
+                p2p_prio_logic_data.isodep_detected == 1 &&
+                p2p_prio_logic_data.first_tech_mode != tech_mode)
+        {
+            p2p_prio_logic_data.isodep_detected = 1;
+            p2p_prio_logic_data.timer_expired = 0;
+            NFA_TRACE_DEBUG0 ("ISO-DEP TypeB Detected First Time  Resume the Polling Loop");
+            nfc_stop_quick_timer (&p2p_prio_logic_data.timer_list);
+            nci_snd_deactivate_cmd(NFA_DEACTIVATE_TYPE_DISCOVERY);
+            return FALSE;
+        }
+#endif
 
         else if (event == NCI_MSG_RF_INTF_ACTIVATED &&
                  protocol == NCI_PROTOCOL_ISO_DEP &&
