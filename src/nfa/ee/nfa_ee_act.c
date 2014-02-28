@@ -2026,13 +2026,13 @@ void nfa_ee_update_rout(void)
     int xx;
     tNFA_EE_ECB          *p_cb;
     UINT8   mask;
-    BT_HDR  msg;
+    tNFA_EE_MSG  msg;
 
     NFA_TRACE_DEBUG1 ("nfa_ee_update_rout ee_cfg_sts:0x%02x", nfa_ee_cb.ee_cfg_sts);
 
     /* use action function to send routing and VS configuration to NFCC */
-    msg.event = NFA_EE_CFG_TO_NFCC_EVT;
-    nfa_ee_evt_hdlr (&msg);
+    msg.hdr.event = NFA_EE_CFG_TO_NFCC_EVT;
+    nfa_ee_evt_hdlr ((BT_HDR *)&msg);
 
     /* all configuration is updated to NFCC, clear the status mask */
     nfa_ee_cb.ee_cfg_sts   &= NFA_EE_STS_PREV;
