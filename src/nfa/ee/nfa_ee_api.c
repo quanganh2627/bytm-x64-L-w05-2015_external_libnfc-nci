@@ -500,32 +500,34 @@ tNFA_STATUS NFA_AddEePowerState(tNFA_HANDLE          ee_handle,
     {
         status = NFA_STATUS_INVALID_PARAM;
     }
-
-    if((power_state_mask & NFA_EE_PWR_STATE_SWITCH_OFF) != 0x00)
-    {
-        for(xx=0; xx < p_cb->aid_entries; xx++)
-        {
-            p_cb->aid_pwr_cfg[xx] |= power_state_mask;
-            p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_AID;
-        }
-
-        /* For tech and proto only enable power off mode*/
-        p_cb->proto_switch_off |= p_cb->proto_switch_on;
-        p_cb->tech_switch_off |= p_cb->tech_switch_on;
-    }
     else
     {
-        for(xx=0; xx < p_cb->aid_entries; xx++)
+        if((power_state_mask & NFA_EE_PWR_STATE_SWITCH_OFF) != 0x00)
         {
-            p_cb->aid_pwr_cfg[xx] &= power_state_mask;
-            p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_AID;
+            for(xx=0; xx < p_cb->aid_entries; xx++)
+            {
+                p_cb->aid_pwr_cfg[xx] |= power_state_mask;
+                p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_AID;
+            }
+
+            /* For tech and proto only enable power off mode*/
+            p_cb->proto_switch_off |= p_cb->proto_switch_on;
+            p_cb->tech_switch_off |= p_cb->tech_switch_on;
+        }
+        else
+        {
+            for(xx=0; xx < p_cb->aid_entries; xx++)
+            {
+                p_cb->aid_pwr_cfg[xx] &= power_state_mask;
+                p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_AID;
+            }
+
+            p_cb->proto_switch_off &= 0x00;
+            p_cb->tech_switch_off &= 0x00;
         }
 
-        p_cb->proto_switch_off &= 0x00;
-        p_cb->tech_switch_off &= 0x00;
+        p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_TECH|NFA_EE_ECB_FLAGS_PROTO;
     }
-
-    p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_TECH|NFA_EE_ECB_FLAGS_PROTO;
 
     return status;
 }
