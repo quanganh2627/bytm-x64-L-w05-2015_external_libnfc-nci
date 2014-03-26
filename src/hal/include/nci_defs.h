@@ -478,6 +478,7 @@ typedef UINT8 tNCI_DISCOVERY_TYPE;
 #define NCI_ROUTE_PWR_STATE_BATT_OFF    0x04        /* The device's battery is removed */
 #if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 #define NCI_ROUTE_PWR_STATE_SCREEN_OFF  0x80        /* The device is screen off mode */
+#define NCI_ROUTE_PWR_STATE_SCREEN_LOCK  0x40        /* The device is screen lock mode */
 #endif
 
 #define NCI_NFCEE_TAG_HW_ID             0x00       /* Hardware / Registration Identification  */

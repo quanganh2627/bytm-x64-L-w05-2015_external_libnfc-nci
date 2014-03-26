@@ -1699,7 +1699,7 @@ tNFA_STATUS nfa_ee_route_add_one_ecb(tNFA_EE_ECB *p_cb, int max_len, BOOLEAN mor
             power_cfg |= NCI_ROUTE_PWR_STATE_BATT_OFF;
 #if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
         if (power_cfg != 0x00)
-            power_cfg |= NCI_ROUTE_PWR_STATE_SCREEN_OFF;
+            power_cfg |= (NCI_ROUTE_PWR_STATE_SCREEN_OFF | NCI_ROUTE_PWR_STATE_SCREEN_LOCK);
 #endif
         if (power_cfg)
         {
@@ -1726,7 +1726,7 @@ tNFA_STATUS nfa_ee_route_add_one_ecb(tNFA_EE_ECB *p_cb, int max_len, BOOLEAN mor
             power_cfg |= NCI_ROUTE_PWR_STATE_BATT_OFF;
 #if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
         if (power_cfg != 0x00)
-            power_cfg |= NCI_ROUTE_PWR_STATE_SCREEN_OFF;
+            power_cfg |= (NCI_ROUTE_PWR_STATE_SCREEN_OFF | NCI_ROUTE_PWR_STATE_SCREEN_LOCK);
 #endif
         if (power_cfg)
         {
