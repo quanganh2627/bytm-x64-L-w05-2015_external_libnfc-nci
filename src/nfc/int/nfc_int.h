@@ -219,12 +219,18 @@ typedef struct
     UINT8               trace_level;
     UINT8               last_hdr[NFC_SAVED_HDR_SIZE];/* part of last NCI command header */
     UINT8               last_cmd[NFC_SAVED_CMD_SIZE];/* part of last NCI command payload */
-
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    UINT8              *last_cmd_buf;
+    UINT8               cmd_size;
     UINT8               recov_last_hdr[NFC_SAVED_HDR_SIZE];/* part of last NCI command header */
     UINT8               recov_last_cmd[NFC_SAVED_CMD_SIZE];/* part of last NCI command payload */
+    UINT8              *recov_last_cmd_buf;
+    UINT8               recov_cmd_size;
 #endif
     void                *p_vsc_cback;       /* the callback function for last VSC command */
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    void                *recov_vsc_cback;
+#endif
     BUFFER_Q            nci_cmd_xmit_q;     /* NCI command queue */
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
     BUFFER_Q            nci_cmd_recov_xmit_q;     /* NCI recovery command queue */

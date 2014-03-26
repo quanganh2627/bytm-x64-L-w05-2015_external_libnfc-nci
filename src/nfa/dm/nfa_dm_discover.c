@@ -60,6 +60,7 @@
 */
 #if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
 static BOOLEAN reconnect_in_progress;
+static BOOLEAN is_emvco_active;
 extern unsigned char appl_dta_mode_flag;
 #endif
 
@@ -2013,6 +2014,15 @@ static void nfa_dm_disc_sm_idle (tNFA_DM_RF_DISC_SM_EVENT event,
             }
             /* Otherwise, deactivating when getting unexpected activation */
         }
+#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+        else if (p_data->nfc_discover.status == NCI_STATUS_SEMANTIC_ERROR)
+        {
+            /* check any pending flags like NFA_DM_DISC_FLAGS_STOPPING or NFA_DM_DISC_FLAGS_DISABLING */
+            nfa_dm_disc_new_state (NFA_DM_RFST_IDLE);
+            /* check if need to restart discovery after resync discovery state with NFCC */
+            nfa_dm_start_rf_discover ();
+        }
+#endif
         /* Otherwise, wait for deactivation NTF */
         break;
 
@@ -3151,8 +3161,11 @@ static char *nfa_dm_disc_event_2_str (UINT8 event)
 *******************************************************************************/
 BOOLEAN nfa_dm_p2p_prio_logic(UINT8 event, UINT8 *p, UINT8 ntf_rsp)
 {
-
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    if (TRUE == is_emvco_active)
+    {
+        NFA_TRACE_DEBUG0("returning from nfa_dm_p2p_prio_logic  is_emvco_active");
+        return TRUE;
+    }
     if (TRUE == reconnect_in_progress)
     {
         NFA_TRACE_DEBUG0("returning from nfa_dm_p2p_prio_logic  reconnect_in_progress");
@@ -3164,7 +3177,6 @@ BOOLEAN nfa_dm_p2p_prio_logic(UINT8 event, UINT8 *p, UINT8 ntf_rsp)
         /*Disable the P2P Prio Logic when DTA is running*/
         return TRUE;
     }
-#endif
 
     if(nfa_dm_cb.disc_cb.disc_state == NFA_DM_RFST_DISCOVERY)
     {
@@ -3190,15 +3202,12 @@ BOOLEAN nfa_dm_p2p_prio_logic(UINT8 event, UINT8 *p, UINT8 ntf_rsp)
         {
             memset(&p2p_prio_logic_data, 0x00, sizeof(nfa_dm_p2p_prio_logic_t));
             p2p_prio_logic_data.isodep_detected = 1;
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
             p2p_prio_logic_data.first_tech_mode = tech_mode;
-#endif
             NFA_TRACE_DEBUG0 ("ISO-DEP Detected First Time  Resume the Polling Loop");
             nci_snd_deactivate_cmd(NFA_DEACTIVATE_TYPE_DISCOVERY);
             return FALSE;
         }
 
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
         else if (event == NCI_MSG_RF_INTF_ACTIVATED &&
                 protocol == NCI_PROTOCOL_ISO_DEP &&
                 p2p_prio_logic_data.isodep_detected == 1 &&
@@ -3211,7 +3220,6 @@ BOOLEAN nfa_dm_p2p_prio_logic(UINT8 event, UINT8 *p, UINT8 ntf_rsp)
             nci_snd_deactivate_cmd(NFA_DEACTIVATE_TYPE_DISCOVERY);
             return FALSE;
         }
-#endif
 
         else if (event == NCI_MSG_RF_INTF_ACTIVATED &&
                  protocol == NCI_PROTOCOL_ISO_DEP &&
@@ -3266,6 +3274,12 @@ void NFA_SetReconnectState(BOOLEAN flag)
 {
     reconnect_in_progress = flag;
     NFA_TRACE_DEBUG1("NFA_SetReconnectState = 0x%x", reconnect_in_progress);
+}
+
+void NFA_SetEmvCoState (BOOLEAN flag)
+{
+    is_emvco_active = flag;
+    NFA_TRACE_DEBUG1("NFA_SetEmvCoState = 0x%x", is_emvco_active);
 }
 
 /*******************************************************************************

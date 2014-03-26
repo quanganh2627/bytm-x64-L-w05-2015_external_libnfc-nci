@@ -148,6 +148,26 @@ void nfc_ncif_cmd_timeout (void)
         NFC_TRACE_ERROR2 ("nfc_ncif_cmd_timeout 0x%x 0x%x" , nfc_cb.last_hdr[0], nfc_cb.last_hdr[1]);
 
         memcpy(nfc_cb.recov_last_hdr,nfc_cb.last_hdr, NFC_SAVED_HDR_SIZE);
+        if ((nfc_cb.last_hdr[0] == 0x20 && nfc_cb.last_hdr[1] == 0x02)
+           || (nfc_cb.last_hdr[0] == 0x2F && nfc_cb.last_hdr[1] == 0x15))
+        {
+            nfc_cb.recov_cmd_size = nfc_cb.cmd_size;
+            if (nfc_cb.recov_last_cmd_buf != NULL)
+            {
+                GKI_freebuf(nfc_cb.recov_last_cmd_buf); // ======> Free before allocation
+            }
+
+            nfc_cb.recov_last_cmd_buf = (UINT8 *) GKI_getbuf( nfc_cb.recov_cmd_size + 1);
+            memcpy(nfc_cb.recov_last_cmd_buf, nfc_cb.last_cmd_buf, nfc_cb.recov_cmd_size + 1);
+            if (nfc_cb.p_vsc_cback != NULL)
+            {
+                nfc_cb.recov_vsc_cback = nfc_cb.p_vsc_cback;
+            }
+        }
+        else
+        {
+            memcpy(nfc_cb.recov_last_cmd, nfc_cb.last_cmd, NFC_SAVED_CMD_SIZE);
+        }
         memcpy(nfc_cb.recov_last_cmd, nfc_cb.last_cmd, NFC_SAVED_CMD_SIZE);
         NFC_TRACE_ERROR2 ("nfc_ncif_cmd_timeout 0x%x 0x%x" , nfc_cb.recov_last_hdr[0], nfc_cb.recov_last_hdr[1]);
 
@@ -377,10 +397,31 @@ void nfc_ncif_check_cmd_queue (BT_HDR *p_buf)
 
         if (p_buf)
         {
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+            /* save the message header to double check the response */
+            ps   = (UINT8 *)(p_buf + 1) + p_buf->offset;
+            memcpy(nfc_cb.last_hdr, ps, NFC_SAVED_HDR_SIZE);
+            if ((nfc_cb.last_hdr[0] == 0x20 && nfc_cb.last_hdr[1] == 0x02)
+                    || (nfc_cb.last_hdr[0] == 0x2F && nfc_cb.last_hdr[1] == 0x15))
+            {
+                nfc_cb.cmd_size = *(ps + NFC_SAVED_HDR_SIZE);
+                if (nfc_cb.last_cmd_buf != NULL)
+                {
+                    GKI_freebuf(nfc_cb.last_cmd_buf); // ======> Free before allocation
+                }
+                nfc_cb.last_cmd_buf = (UINT8 *) GKI_getbuf(nfc_cb.cmd_size +1 );
+                memcpy(nfc_cb.last_cmd_buf, ps + NFC_SAVED_HDR_SIZE, (nfc_cb.cmd_size + 1));
+            }
+            else
+            {
+                memcpy(nfc_cb.last_cmd, ps + NCI_MSG_HDR_SIZE, NFC_SAVED_CMD_SIZE);
+            }
+#else
             /* save the message header to double check the response */
             ps   = (UINT8 *)(p_buf + 1) + p_buf->offset;
             memcpy(nfc_cb.last_hdr, ps, NFC_SAVED_HDR_SIZE);
             memcpy(nfc_cb.last_cmd, ps + NCI_MSG_HDR_SIZE, NFC_SAVED_CMD_SIZE);
+#endif
             if (p_buf->layer_specific == NFC_WAIT_RSP_VSC)
             {
                 /* save the callback for NCI VSCs)  */
@@ -480,11 +521,22 @@ void nfc_ncif_send_cmd (BT_HDR *p_buf)
         NFC_TRACE_DEBUG0 ("NFC recovery (DISC) is in progress...");
         //Do Nothing. just pass through
     }
+    else if (nfc_cb.nfc_state == NFC_STATE_RECOVERY_CPLT && (cmd[0] == 0x21 && cmd[1] == 0x06))
+    {
+        NFC_TRACE_DEBUG0 ("NFC recovery is in progress");
+        //Do Nothing. just pass through
+    }
+    else if (nfc_cb.nfc_state == NFC_STATE_RECOVERY_CPLT && (cmd[0] == 0x20 && cmd[1] == 0x02))
+    {
+        NFC_TRACE_DEBUG0 ("NFC recovery is in progress...");
+        //Do Nothing. just pass through
+    }
     else if(nfc_cb.nfc_state == NFC_STATE_RECOVERY || nfc_cb.nfc_state == NFC_STATE_RECOVERY_CPLT)
     {
         if(p_buf && p_buf->len > 2)
         {
-            if( (cmd[0] == 0x20 && (cmd[1] == 0x00 || cmd[1] == 0x01)) /*||
+            if( (cmd[0] == 0x20 && (cmd[1] == 0x00 || cmd[1] == 0x01)) ||
+                (cmd[0] == 0x2F && cmd[1] == 0x15) /*||
                     (cmd[0] == 0x21 && cmd[1] == 0x03)*/
             )
             {
@@ -535,11 +587,14 @@ BOOLEAN nfc_ncif_process_event (BT_HDR *p_msg)
     {
         //Filter for recov rsp
         NFC_TRACE_DEBUG0 ("NFC recovery is in progress, dropping incoming packets.");
-        if( (p[0] == 0x40 && (p[1] == 0x00 || p[1] == 0x01)) ||
-                (p[0] == 0x41 && p[1] == 0x03)
+        if( (p[0] == 0x40 && (p[1] == 0x00 || p[1] == 0x01 || p[2] == 0x02)) ||
+                (p[0] == 0x41 && (p[1] == 0x03 || (p[1] == 0x06))) || (p[0] == 0x4F && p[1] == 0x15)
         )
         {
+            if (!(p[0] == 0x4F && p[1] == 0x15))
+            {
             nfc_ncif_update_window ();
+            }
             nfc_ncif_process_recov_event(p_msg);
             return (FALSE);
         }
@@ -1206,6 +1261,16 @@ void nfc_ncif_proc_deactivate (UINT8 status, UINT8 deact_type, BOOLEAN is_ntf)
     if (p_cb->p_cback)
         (*p_cb->p_cback) (NFC_RF_CONN_ID, NFC_DEACTIVATE_CEVT, (tNFC_CONN *) p_deact);
 
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    if ((nfc_cb.flags & (NFC_FL_DISCOVER_PENDING | NFC_FL_CONTROL_REQUESTED))
+        && (deact_type == NFC_DEACTIVATE_TYPE_DISCOVERY) && (is_ntf == TRUE))
+    {
+        NFC_TRACE_DEBUG0 ("Abnormal State, Deactivate NTF is ignored,"
+            " MW is already going to Discovery state");
+        return;
+    }
+#endif
+
     if (nfc_cb.p_discv_cback)
     {
         (*nfc_cb.p_discv_cback) (NFC_DEACTIVATE_DEVT, &evt_data);
@@ -1459,6 +1524,7 @@ void nfc_ncif_process_recov_event(BT_HDR *p_msg)
 {
     UINT8 *p = (UINT8 *) (p_msg + 1) + p_msg->offset;
     NFC_TRACE_ERROR0 ("nfc_ncif_process_recov_event");
+    UINT8 status = NFC_STATUS_OK;
 
     if(p[0] == 0x40 && p[1] == 0x00)
     {
@@ -1469,11 +1535,63 @@ void nfc_ncif_process_recov_event(BT_HDR *p_msg)
     }
     else if (p[0] == 0x40 && p[1] == 0x01)
     {
+        if ((nfc_cb.recov_last_hdr[0] == 0x20 && nfc_cb.recov_last_hdr[1] == 0x02)
+               || (nfc_cb.recov_last_hdr[0] == 0x2F && nfc_cb.recov_last_hdr[1] == 0x15))
+        {
+            BT_HDR *p;
+            UINT8 *pp;
+            NFC_TRACE_ERROR0 ("nfc_ncif_process_recov_event - CORE_SET_CONFIG");
+            if ((p = NCI_GET_CMD_BUF (nfc_cb.recov_cmd_size + 1)) == NULL)
+            {
+                NFC_TRACE_ERROR0 ("nfc_ncif_process_recov_event - NCI_STATUS_FAILED");
+                return (NCI_STATUS_FAILED);
+            }
+
+            p->event = BT_EVT_TO_NFC_NCI;
+            p->len = NCI_MSG_HDR_SIZE + nfc_cb.recov_cmd_size;
+            p->offset = NCI_MSG_OFFSET_SIZE;
+            pp = (UINT8 *) (p + 1) + p->offset;
+            UINT8_TO_STREAM (pp,nfc_cb.recov_last_hdr[0]);
+            UINT8_TO_STREAM (pp,nfc_cb.recov_last_hdr[1]);
+            ARRAY_TO_STREAM (pp,nfc_cb.recov_last_cmd_buf, nfc_cb.recov_cmd_size+1);
+
+            nfa_dm_cb.disc_cb.disc_state = NFA_DM_RFST_IDLE;
+
+            if (nfc_cb.recov_last_hdr[0] == 0x20 && nfc_cb.recov_last_hdr[1] == 0x02)
+            {
+                nfc_cb.nfc_state = NFC_STATE_RECOVERY_CPLT;
+            }
+            else if (nfc_cb.recov_last_hdr[0] == 0x2F && nfc_cb.recov_last_hdr[1] == 0x15)
+            {
+                nfc_cb.p_vsc_cback = nfc_cb.recov_vsc_cback;
+                nfc_cb.nxpCbflag = TRUE;
+            }
+            nfc_ncif_send_cmd (p);
+        }
+        else
+        {
         NFC_TRACE_ERROR0 ("nfc_ncif_process_recov_event - CORE_INIT Done send discovery cmd");
         nfc_cb.nfc_state = NFC_STATE_RECOVERY_CPLT;
         //CORE_INIT Done send discovery cmd.
         UINT8 *ps = (UINT8 *)nfc_cb.p_last_disc;
-        nci_snd_discover_cmd (*ps, (tNFC_DISCOVER_PARAMS *)(ps + 1));
+        status = nci_snd_discover_cmd (*ps, (tNFC_DISCOVER_PARAMS *)(ps + 1));
+            if (status == NCI_STATUS_FAILED)
+            {
+                nfc_cb.nfc_state = NFC_STATE_IDLE;
+            }
+
+        }
+    }
+    else if (p[0] == 0x4F && p[1] == 0x15)
+    {
+        if (nfc_cb.nxpCbflag == TRUE)
+        {
+            nfc_cb.nfc_state = NFC_STATE_IDLE;
+            nfa_dm_cb.disc_cb.disc_state = NFA_DM_RFST_IDLE;
+            nfa_dm_cb.disc_cb.disc_flags = 0x00;
+            nfc_cb.nxpCbflag = FALSE;
+            nci_proc_prop_nxp_rsp(p_msg);
+        }
     }
     else if (p[0] == 0x41 && p[1] == 0x03)
     {
@@ -1509,21 +1627,51 @@ void nfc_ncif_process_recov_event(BT_HDR *p_msg)
         else if (nfc_cb.recov_last_hdr[0] == 0x21 && nfc_cb.recov_last_hdr[1] == 0x06)
         {
             nfa_dm_cb.disc_cb.disc_state = NFA_DM_RFST_POLL_ACTIVE;
-            nfc_ncif_proc_deactivate (NFC_STATUS_REJECTED , 0x00, FALSE);
-            nfc_ncif_proc_deactivate (NFC_STATUS_REJECTED , 0x00, TRUE);
+            nfc_cb.nfc_state = NFC_STATE_RECOVERY_CPLT;
+            nci_snd_deactivate_cmd(0x00);
+            goto TheEnd;
         }else if(nfa_dm_cb.disc_cb.disc_state == NFA_DM_RFST_POLL_ACTIVE)
         {
             nfc_ncif_proc_deactivate (NFC_STATUS_REJECTED , 0x00, FALSE);
             nfc_ncif_proc_deactivate (NFC_STATUS_REJECTED , 0x00, TRUE);
         }
 
+        NFC_TRACE_ERROR0 ("NxpNci:setting the state to idle");
         //restore the libnfc-nci state
         nfc_cb.nfc_state = NFC_STATE_IDLE;//nfc_cb.old_nfc_state;
         nfa_dm_cb.disc_cb.disc_state = NFA_DM_RFST_DISCOVERY;
         nfa_dm_cb.disc_cb.disc_flags = 0x00;
         nfc_ncif_check_cmd_queue(NULL);
+        TheEnd:;
+    }
+    else if (p[0] == 0x41 && p[1] == 0x06)
+    {
+        nfc_cb.nfc_state = NFC_STATE_IDLE;
+        if (p[2] > 0)
+        {
+            nfc_ncif_proc_deactivate (p[3] , 0x00, FALSE);
+        }
+    }
+    else if (p[0] == 0x61 && p[1] == 0x06)
+    {
+        if (p[2] > 0)
+        {
+            nfc_ncif_proc_deactivate (p[3] , 0x00, TRUE);
+        }
+        nfa_dm_cb.disc_cb.disc_state = NFC_STATE_IDLE;
+        nfa_dm_cb.disc_cb.disc_flags = 0x00;
+        nfc_ncif_check_cmd_queue(NULL);
+    }
+    else if(p[0] == 0x40 && p[1] == 0x02)
+    {
+        NFC_TRACE_ERROR0 ("nfc_ncif_process_recov_event - SET_CONFIG Done send discovery cmd");
+        nfc_cb.nfc_state = NFC_STATE_RECOVERY_CPLT;
+        //CORE_INIT Done send discovery cmd.
+        UINT8 *ps = (UINT8 *)nfc_cb.p_last_disc;
+        nci_snd_discover_cmd (*ps, (tNFC_DISCOVER_PARAMS *)(ps + 1));
     }
     GKI_freebuf (p_msg);
+    NFC_TRACE_ERROR0 ("NxpNci:recovery process finished");
 }
 #endif
 
