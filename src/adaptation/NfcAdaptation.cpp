@@ -59,6 +59,8 @@ tHAL_NFC_DATA_CBACK* NfcAdaptation::mHalDataCallback = NULL;
 ThreadCondVar NfcAdaptation::mHalOpenCompletedEvent;
 ThreadCondVar NfcAdaptation::mHalCloseCompletedEvent;
 #if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+ThreadCondVar NfcAdaptation::mHalCoreResetCompletedEvent;
+ThreadCondVar NfcAdaptation::mHalCoreInitCompletedEvent;
 ThreadCondVar NfcAdaptation::mHalInitCompletedEvent;
 #endif
 
@@ -571,6 +573,10 @@ void NfcAdaptation::DownloadFirmware ()
     const char* func = "NfcAdaptation::DownloadFirmware";
     ALOGD ("%s: enter", func);
 #if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    static UINT8 cmd_reset_nci[] = {0x20,0x00,0x01,0x01};
+    static UINT8 cmd_init_nci[]  = {0x20,0x01,0x00};
+    static UINT8 cmd_reset_nci_size = sizeof(cmd_reset_nci) / sizeof(UINT8);
+    static UINT8 cmd_init_nci_size  = sizeof(cmd_init_nci)  / sizeof(UINT8);
     UINT8 p_core_init_rsp_params;
 #endif
     HalInitialize ();
@@ -581,6 +587,20 @@ void NfcAdaptation::DownloadFirmware ()
     mHalOpenCompletedEvent.wait ();
 
 #if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    /* Send a CORE_RESET and CORE_INIT to the NFCC. This is required because when calling
+     * HalCoreInitialized, the HAL is going to parse the conf file and send NCI commands
+     * to the NFCC. Hence CORE-RESET and CORE-INIT have to be sent prior to this.
+     */
+    mHalCoreResetCompletedEvent.lock();
+    ALOGD("%s: send CORE_RESET", func);
+    HalWrite(cmd_reset_nci_size , cmd_reset_nci);
+    mHalCoreResetCompletedEvent.wait();
+
+    mHalCoreInitCompletedEvent.lock();
+    ALOGD("%s: send CORE_INIT", func);
+    HalWrite(cmd_init_nci_size , cmd_init_nci);
+    mHalCoreInitCompletedEvent.wait();
+
     mHalInitCompletedEvent.lock();
     ALOGD("%s: try init HAL", func);
     HalCoreInitialized(&p_core_init_rsp_params);
@@ -645,6 +665,19 @@ void NfcAdaptation::HalDownloadFirmwareCallback (nfc_event_t event, nfc_status_t
 *******************************************************************************/
 void NfcAdaptation::HalDownloadFirmwareDataCallback (uint16_t data_len, uint8_t* p_data)
 {
+#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+   if (data_len > 3)
+   {
+      if (p_data[0] == 0x40 && p_data[1] == 0x00)
+      {
+          mHalCoreResetCompletedEvent.signal();
+      }
+      else if (p_data[0] == 0x40 && p_data[1] == 0x01)
+      {
+          mHalCoreInitCompletedEvent.signal();
+      }
+   }
+#endif
 }
 
 

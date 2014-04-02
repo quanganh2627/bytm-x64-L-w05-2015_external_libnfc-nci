@@ -86,6 +86,8 @@ private:
     static ThreadCondVar mHalOpenCompletedEvent;
     static ThreadCondVar mHalCloseCompletedEvent;
 #if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    static ThreadCondVar mHalCoreResetCompletedEvent;
+    static ThreadCondVar mHalCoreInitCompletedEvent;
     static ThreadCondVar mHalInitCompletedEvent;
 #endif
 
