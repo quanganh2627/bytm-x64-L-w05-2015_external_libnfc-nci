@@ -24,7 +24,7 @@
 
 #define LOG_TAG "NfcAdaptation"
 
-const char alternative_config_path[] = "";
+const char alternative_config_path[] = "/etc/nfc/";
 const char transport_config_path[] = "/etc/";
 
 #define config_name             "libnfc-brcm.conf"
