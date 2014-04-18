@@ -884,7 +884,17 @@ tNFC_STATUS NFC_DiscoveryMap (UINT8 num, tNFC_DISCOVER_MAPS *p_maps,
             NFC_TRACE_DEBUG4 ("[%d]: intf_type:%d intf_mask: 0x%x is_supported:%d", xx, p_maps[xx].intf_type, intf_mask, is_supported);
         }
         if (is_supported)
-            memcpy (&max_maps[num_intf++], &p_maps[xx], sizeof (tNFC_DISCOVER_MAPS));
+        {
+            if (num_intf < (NFC_NFCC_MAX_NUM_VS_INTERFACE + NCI_INTERFACE_MAX))
+            {
+                memcpy (&max_maps[num_intf++], &p_maps[xx], sizeof (tNFC_DISCOVER_MAPS));
+            }
+            else
+            {
+                NFC_TRACE_ERROR0 ("NFC_DiscoveryMap maps buffer overflow");
+                return NFC_STATUS_FAILED;
+            }
+        }
         else
         {
             NFC_TRACE_WARNING1 ("NFC_DiscoveryMap interface=0x%x is not supported by NFCC", p_maps[xx].intf_type);
