@@ -158,7 +158,17 @@ void nfc_ncif_cmd_timeout (void)
             }
 
             nfc_cb.recov_last_cmd_buf = (UINT8 *) GKI_getbuf( nfc_cb.recov_cmd_size + 1);
-            memcpy(nfc_cb.recov_last_cmd_buf, nfc_cb.last_cmd_buf, nfc_cb.recov_cmd_size + 1);
+
+            if (nfc_cb.recov_last_cmd_buf !=NULL)
+            {
+                memcpy(nfc_cb.recov_last_cmd_buf, nfc_cb.last_cmd_buf, nfc_cb.recov_cmd_size + 1);
+            }
+            else
+            {
+                NFC_TRACE_ERROR0 ("nfc_ncif_cmd_timeout no free memory!!!");
+                nfc_cb.recov_cmd_size = 0;
+            }
+
             if (nfc_cb.p_vsc_cback != NULL)
             {
                 nfc_cb.recov_vsc_cback = nfc_cb.p_vsc_cback;
@@ -410,7 +420,16 @@ void nfc_ncif_check_cmd_queue (BT_HDR *p_buf)
                     GKI_freebuf(nfc_cb.last_cmd_buf); // ======> Free before allocation
                 }
                 nfc_cb.last_cmd_buf = (UINT8 *) GKI_getbuf(nfc_cb.cmd_size +1 );
-                memcpy(nfc_cb.last_cmd_buf, ps + NFC_SAVED_HDR_SIZE, (nfc_cb.cmd_size + 1));
+
+                if (nfc_cb.last_cmd_buf != NULL)
+                {
+                    memcpy(nfc_cb.last_cmd_buf, ps + NFC_SAVED_HDR_SIZE, (nfc_cb.cmd_size + 1));
+                }
+                else
+                {
+                    NFC_TRACE_ERROR0 ("nfc_ncif_check_cmd_queue no free memory!!!");
+                    nfc_cb.cmd_size = 0;
+                }
             }
             else
             {
