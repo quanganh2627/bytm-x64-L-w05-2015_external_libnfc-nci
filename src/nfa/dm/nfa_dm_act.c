@@ -1512,6 +1512,12 @@ static void nfa_dm_excl_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
         }
         else
         {
+            /* Release (if not yet done) the previous activate_ntf buffer. Indeed in some cases
+             * nfa_dm_notify_activation_status() may not have been called by the sub-module.
+             */
+            if (nfa_dm_cb.p_activate_ntf != NULL) GKI_freebuf (nfa_dm_cb.p_activate_ntf);
+            nfa_dm_cb.p_activate_ntf = NULL;
+
             /* holding activation notification until sub-module is ready */
             nfa_dm_cb.p_activate_ntf = (UINT8*) GKI_getbuf (sizeof (tNFC_ACTIVATE_DEVT));
 
@@ -1613,6 +1619,12 @@ static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
             /* store SEL_RES response */
             nfa_dm_cb.disc_cb.activated_sel_res = p_data->activate.rf_tech_param.param.pa.sel_rsp;
         }
+
+        /* Release (if not yet done) the previous activate_ntf buffer. Indeed in some cases
+         * nfa_dm_notify_activation_status() may not have been called by the sub-module.
+         */
+        if (nfa_dm_cb.p_activate_ntf != NULL) GKI_freebuf (nfa_dm_cb.p_activate_ntf);
+        nfa_dm_cb.p_activate_ntf = NULL;
 
         /* holding activation notification until sub-module is ready */
         nfa_dm_cb.p_activate_ntf = (UINT8*) GKI_getbuf (sizeof (tNFC_ACTIVATE_DEVT));
